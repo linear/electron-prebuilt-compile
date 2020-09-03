@@ -1,4 +1,4 @@
-// Type definitions for Electron 9.0.2
+// Type definitions for Electron 10.1.1
 // Project: http://electronjs.org/
 // Definitions by: The Electron Team <https://github.com/electron/electron>
 // Definitions: https://github.com/electron/electron-typescript-definitions
@@ -8,105 +8,11 @@
 type GlobalEvent = Event;
 
 declare namespace Electron {
+  const NodeEventEmitter: typeof import('events').EventEmitter;
+
   class Accelerator extends String {
 
   }
-
-  interface CommonInterface {
-    app: App;
-    autoUpdater: AutoUpdater;
-    BrowserView: typeof BrowserView;
-    BrowserWindowProxy: typeof BrowserWindowProxy;
-    BrowserWindow: typeof BrowserWindow;
-    ClientRequest: typeof ClientRequest;
-    clipboard: Clipboard;
-    CommandLine: typeof CommandLine;
-    contentTracing: ContentTracing;
-    contextBridge: ContextBridge;
-    Cookies: typeof Cookies;
-    crashReporter: CrashReporter;
-    Debugger: typeof Debugger;
-    desktopCapturer: DesktopCapturer;
-    dialog: Dialog;
-    Dock: typeof Dock;
-    DownloadItem: typeof DownloadItem;
-    globalShortcut: GlobalShortcut;
-    inAppPurchase: InAppPurchase;
-    IncomingMessage: typeof IncomingMessage;
-    ipcMain: IpcMain;
-    ipcRenderer: IpcRenderer;
-    MenuItem: typeof MenuItem;
-    Menu: typeof Menu;
-    nativeImage: typeof NativeImage;
-    nativeTheme: NativeTheme;
-    netLog: NetLog;
-    net: Net;
-    Notification: typeof Notification;
-    powerMonitor: PowerMonitor;
-    powerSaveBlocker: PowerSaveBlocker;
-    protocol: Protocol;
-    remote: Remote;
-    screen: Screen;
-    ServiceWorkers: typeof ServiceWorkers;
-    session: typeof Session;
-    shell: Shell;
-    systemPreferences: SystemPreferences;
-    TouchBarButton: typeof TouchBarButton;
-    TouchBarColorPicker: typeof TouchBarColorPicker;
-    TouchBarGroup: typeof TouchBarGroup;
-    TouchBarLabel: typeof TouchBarLabel;
-    TouchBarPopover: typeof TouchBarPopover;
-    TouchBarScrubber: typeof TouchBarScrubber;
-    TouchBarSegmentedControl: typeof TouchBarSegmentedControl;
-    TouchBarSlider: typeof TouchBarSlider;
-    TouchBarSpacer: typeof TouchBarSpacer;
-    TouchBar: typeof TouchBar;
-    Tray: typeof Tray;
-    webContents: typeof WebContents;
-    webFrame: WebFrame;
-    WebRequest: typeof WebRequest;
-    webviewTag: WebviewTag;
-  }
-
-  interface MainInterface extends CommonInterface {
-  }
-
-  interface RendererInterface extends CommonInterface {
-  }
-
-  interface AllElectron extends MainInterface, RendererInterface {}
-
-  const app: App;
-  const autoUpdater: AutoUpdater;
-  const clipboard: Clipboard;
-  const contentTracing: ContentTracing;
-  const contextBridge: ContextBridge;
-  const crashReporter: CrashReporter;
-  const desktopCapturer: DesktopCapturer;
-  const dialog: Dialog;
-  const globalShortcut: GlobalShortcut;
-  const inAppPurchase: InAppPurchase;
-  const ipcMain: IpcMain;
-  const ipcRenderer: IpcRenderer;
-  type nativeImage = NativeImage;
-  const nativeImage: typeof NativeImage;
-  const nativeTheme: NativeTheme;
-  const netLog: NetLog;
-  const net: Net;
-  const powerMonitor: PowerMonitor;
-  const powerSaveBlocker: PowerSaveBlocker;
-  const protocol: Protocol;
-  const remote: Remote;
-  const screen: Screen;
-  type session = Session;
-  const session: typeof Session;
-  const shell: Shell;
-  const systemPreferences: SystemPreferences;
-  type webContents = WebContents;
-  const webContents: typeof WebContents;
-  const webFrame: WebFrame;
-  const webviewTag: WebviewTag;
-
   interface App extends NodeJS.EventEmitter {
 
     // Docs: http://electronjs.org/docs/api/app
@@ -592,8 +498,21 @@ You should call `event.preventDefault()` if you want to handle this event.
                                            webContents: WebContents,
                                            moduleName: string) => void): this;
     /**
-     * Emitted when the renderer process of `webContents` crashes or is killed.
+     * Emitted when the renderer process unexpectedly dissapears.  This is normally
+     * because it was crashed or killed.
      */
+    on(event: 'render-process-gone', listener: (event: Event,
+                                                webContents: WebContents,
+                                                details: Details) => void): this;
+    once(event: 'render-process-gone', listener: (event: Event,
+                                                webContents: WebContents,
+                                                details: Details) => void): this;
+    addListener(event: 'render-process-gone', listener: (event: Event,
+                                                webContents: WebContents,
+                                                details: Details) => void): this;
+    removeListener(event: 'render-process-gone', listener: (event: Event,
+                                                webContents: WebContents,
+                                                details: Details) => void): this;
     on(event: 'renderer-process-crashed', listener: (event: Event,
                                                      webContents: WebContents,
                                                      killed: boolean) => void): this;
@@ -613,6 +532,9 @@ You should call `event.preventDefault()` if you want to handle this event.
      * `argv` is an Array of the second instance's command line arguments, and
      * `workingDirectory` is its current working directory. Usually applications
      * respond to this by making their primary window focused and non-minimized.
+     *
+     * **Note:** If the second instance is started by a different user than the first,
+     * the `argv` array will not include the arguments.
      *
      * This event is guaranteed to be emitted after the `ready` event of `app` gets
      * emitted.
@@ -846,11 +768,11 @@ This method can only be called before app is ready.
      */
     disableHardwareAcceleration(): void;
     /**
-     * Enables full sandbox mode on the app.
-     * 
+     * Enables full sandbox mode on the app. This means that all renderers will be
+     * launched sandboxed, regardless of the value of the `sandbox` flag in
+     * WebPreferences.
+
 This method can only be called before app is ready.
-     *
-     * @experimental
      */
     enableSandbox(): void;
     /**
@@ -1003,7 +925,7 @@ You should seek to use the `steal` option as sparingly as possible.
      * called first, a default log directory will be created equivalent to calling
      * `app.setAppLogsPath()` without a `path` parameter.
      */
-    getPath(name: 'home' | 'appData' | 'userData' | 'cache' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'logs' | 'pepperFlashSystemPlugin' | 'crashDumps'): string;
+    getPath(name: 'home' | 'appData' | 'userData' | 'cache' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'pepperFlashSystemPlugin' | 'crashDumps'): string;
     /**
      * The version of the loaded application. If no version is found in the
      * application's `package.json` file, the version of the current bundle or
@@ -1077,6 +999,14 @@ You should seek to use the `steal` option as sparingly as possible.
      * `app.whenReady()`.
      */
     isReady(): boolean;
+    /**
+     * whether `Secure Keyboard Entry` is enabled.
+     * 
+By default this API will return `false`.
+     *
+     * @platform darwin
+     */
+    isSecureKeyboardEntryEnabled(): boolean;
     /**
      * Whether the current desktop environment is Unity launcher.
      *
@@ -1345,6 +1275,20 @@ Here's a very simple example of creating a custom Jump List:
      */
     setPath(name: string, path: string): void;
     /**
+     * Set the `Secure Keyboard Entry` is enabled in your application.
+     *
+     * By using this API, important information such as password and other sensitive
+     * information can be prevented from being intercepted by other processes.
+     *
+     * See Apple's documentation for more details.
+     *
+     * **Note:** Enable `Secure Keyboard Entry` only when it is needed and disable it
+     * when it is no longer needed.
+     *
+     * @platform darwin
+     */
+    setSecureKeyboardEntryEnabled(enabled: boolean): void;
+    /**
      * Creates an `NSUserActivity` and sets it as the current activity. The activity is
      * eligible for Handoff to another device afterward.
      *
@@ -1429,7 +1373,7 @@ Here's a very simple example of creating a custom Jump List:
     /**
      * A `Boolean` which when `true` disables the overrides that Electron has in place
      * to ensure renderer processes are restarted on every navigation.  The current
-     * default value for this property is `false`.
+     * default value for this property is `true`.
      *
      * The intention is for these overrides to become disabled by default and then at
      * some point in the future this property will be removed.  This property impacts
@@ -1452,6 +1396,9 @@ Here's a very simple example of creating a custom Jump List:
      *
      * **Note:** Unity launcher requires the existence of a `.desktop` file to work,
      * for more information please read Desktop Environment Integration.
+     *
+     * **Note:** On macOS, you need to ensure that your application has the permission
+     * to display notifications for this property to take effect.
      *
      * @platform linux,darwin
      */
@@ -1656,7 +1603,7 @@ Here's a very simple example of creating a custom Jump List:
     webContents: WebContents;
   }
 
-  class BrowserWindow extends NodeJS.EventEmitter {
+  class BrowserWindow extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/browser-window
 
@@ -2345,9 +2292,9 @@ On Linux always returns `true`.
      */
     isDocumentEdited(): boolean;
     /**
-     * Returns Boolean - whether the window is enabled.
+     * whether the window is enabled.
      */
-    isEnabled(): void;
+    isEnabled(): boolean;
     /**
      * Whether the window is focused.
      */
@@ -2856,7 +2803,6 @@ On macOS it does not remove the focus from the window.
      * **Note:** The TouchBar API is currently experimental and may change or be
      * removed in future Electron releases.
      *
-     * @experimental
      * @platform darwin
      */
     setTouchBar(touchBar: (TouchBar) | (null)): void;
@@ -2882,7 +2828,7 @@ On macOS it does not remove the focus from the window.
      * 
 **Note:** This API does nothing on Windows.
      */
-    setVisibleOnAllWorkspaces(visible: boolean): void;
+    setVisibleOnAllWorkspaces(visible: boolean, options?: VisibleOnAllWorkspacesOptions): void;
     /**
      * Sets whether the window traffic light buttons should be visible.
      * 
@@ -3061,7 +3007,7 @@ This cannot be called when `titleBarStyle` is set to `customButtonsOnHover`.
     state: string;
   }
 
-  class ClientRequest extends NodeJS.EventEmitter {
+  class ClientRequest extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/client-request
 
@@ -3487,6 +3433,11 @@ This cannot be called when `titleBarStyle` is set to `customButtonsOnHover`.
      */
     path?: string;
     /**
+     * The Same Site policy applied to this cookie.  Can be `unspecified`,
+     * `no_restriction`, `lax` or `strict`.
+     */
+    sameSite: ('unspecified' | 'no_restriction' | 'lax' | 'strict');
+    /**
      * Whether the cookie is marked as secure.
      */
     secure?: boolean;
@@ -3501,7 +3452,7 @@ This cannot be called when `titleBarStyle` is set to `customButtonsOnHover`.
     value: string;
   }
 
-  class Cookies extends NodeJS.EventEmitter {
+  class Cookies extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/cookies
 
@@ -3580,9 +3531,16 @@ Sets a cookie with `details`.
      * with crashes that occur in other renderer processes or in the main process.
      *
      * **Note:** Parameters have limits on the length of the keys and values. Key names
-     * must be no longer than 39 bytes, and values must be no longer than 127 bytes.
+     * must be no longer than 39 bytes, and values must be no longer than 20320 bytes.
      * Keys with names longer than the maximum will be silently ignored. Key values
      * longer than the maximum length will be truncated.
+     *
+     * **Note:** On linux values that are longer than 127 bytes will be chunked into
+     * multiple keys, each 127 bytes in length.  E.g. `addExtraParameter('foo',
+     * 'a'.repeat(130))` will result in two chunked keys `foo__1` and `foo__2`, the
+     * first will contain the first 127 bytes and the second will contain the remaining
+     * 3 bytes.  On your crash reporting backend you should stitch together keys in
+     * this format.
      */
     addExtraParameter(key: string, value: string): void;
     /**
@@ -3671,7 +3629,7 @@ Sets a cookie with `details`.
     scheme: string;
   }
 
-  class Debugger extends NodeJS.EventEmitter {
+  class Debugger extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/debugger
 
@@ -3711,7 +3669,12 @@ Sets a cookie with `details`.
                                      * Event parameters defined by the 'parameters' attribute in the remote debugging
                                      * protocol.
                                      */
-                                    params: any) => void): this;
+                                    params: any,
+                                    /**
+                                     * Unique identifier of attached debugging session, will match the value sent from
+                                     * `debugger.sendCommand`.
+                                     */
+                                    sessionId: string) => void): this;
     once(event: 'message', listener: (event: Event,
                                     /**
                                      * Method name.
@@ -3721,7 +3684,12 @@ Sets a cookie with `details`.
                                      * Event parameters defined by the 'parameters' attribute in the remote debugging
                                      * protocol.
                                      */
-                                    params: any) => void): this;
+                                    params: any,
+                                    /**
+                                     * Unique identifier of attached debugging session, will match the value sent from
+                                     * `debugger.sendCommand`.
+                                     */
+                                    sessionId: string) => void): this;
     addListener(event: 'message', listener: (event: Event,
                                     /**
                                      * Method name.
@@ -3731,7 +3699,12 @@ Sets a cookie with `details`.
                                      * Event parameters defined by the 'parameters' attribute in the remote debugging
                                      * protocol.
                                      */
-                                    params: any) => void): this;
+                                    params: any,
+                                    /**
+                                     * Unique identifier of attached debugging session, will match the value sent from
+                                     * `debugger.sendCommand`.
+                                     */
+                                    sessionId: string) => void): this;
     removeListener(event: 'message', listener: (event: Event,
                                     /**
                                      * Method name.
@@ -3741,7 +3714,12 @@ Sets a cookie with `details`.
                                      * Event parameters defined by the 'parameters' attribute in the remote debugging
                                      * protocol.
                                      */
-                                    params: any) => void): this;
+                                    params: any,
+                                    /**
+                                     * Unique identifier of attached debugging session, will match the value sent from
+                                     * `debugger.sendCommand`.
+                                     */
+                                    sessionId: string) => void): this;
     /**
      * Attaches the debugger to the `webContents`.
      */
@@ -3761,7 +3739,7 @@ Sets a cookie with `details`.
      * 
 Send given command to the debugging target.
      */
-    sendCommand(method: string, commandParams?: any): Promise<any>;
+    sendCommand(method: string, commandParams?: any, sessionId?: string): Promise<any>;
   }
 
   interface DesktopCapturer {
@@ -4204,7 +4182,7 @@ Send given command to the debugging target.
     show(): Promise<void>;
   }
 
-  class DownloadItem extends NodeJS.EventEmitter {
+  class DownloadItem extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/download-item
 
@@ -4600,7 +4578,7 @@ Retrieves the product descriptions.
     restoreCompletedTransactions(): void;
   }
 
-  class IncomingMessage extends NodeJS.EventEmitter {
+  class IncomingMessage extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/incoming-message
 
@@ -4656,7 +4634,7 @@ Retrieves the product descriptions.
     once(event: 'error', listener: Function): this;
     addListener(event: 'error', listener: Function): this;
     removeListener(event: 'error', listener: Function): this;
-    headers: Record<string, string[]>;
+    headers: Record<string, (string) | (string[])>;
     httpVersion: string;
     httpVersionMajor: number;
     httpVersionMinor: number;
@@ -4762,6 +4740,10 @@ Retrieves the product descriptions.
      */
     frameId: number;
     /**
+     * A list of MessagePorts that were transferred with this message
+     */
+    ports: MessagePortMain[];
+    /**
      * A function that will send an IPC message to the renderer frame that sent the
      * original message that you are currently handling.  You should use this method to
      * "reply" to the sent message in order to guarantee the reply will go to the
@@ -4801,17 +4783,22 @@ Retrieves the product descriptions.
      *
      * Send a message to the main process via `channel` and expect a result
      * asynchronously. Arguments will be serialized with the Structured Clone
-     * Algorithm, just like `postMessage`, so prototype chains will not be included.
-     * Sending Functions, Promises, Symbols, WeakMaps, or WeakSets will throw an
-     * exception.
+     * Algorithm, just like `window.postMessage`, so prototype chains will not be
+     * included. Sending Functions, Promises, Symbols, WeakMaps, or WeakSets will throw
+     * an exception.
      *
      * > **NOTE**: Sending non-standard JavaScript types such as DOM objects or special
      * Electron objects is deprecated, and will begin throwing an exception starting
      * with Electron 9.
      *
      * The main process should listen for `channel` with `ipcMain.handle()`.
+     *
+     * For example:
+     *
+     * If you need to transfer a `MessagePort` to the main process, use
+     * `ipcRenderer.postMessage`.
      * 
-For example:
+If you do not need a respons to the message, consider using `ipcRenderer.send`.
      */
     invoke(channel: string, ...args: any[]): Promise<any>;
     /**
@@ -4825,6 +4812,20 @@ For example:
      */
     once(channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void): this;
     /**
+     * Send a message to the main process, optionally transferring ownership of zero or
+     * more `MessagePort` objects.
+     *
+     * The transferred `MessagePort` objects will be available in the main process as
+     * `MessagePortMain` objects by accessing the `ports` property of the emitted
+     * event.
+     *
+     * For example:
+     *
+     * For more information on using `MessagePort` and `MessageChannel`, see the MDN
+     * documentation.
+     */
+    postMessage(channel: string, message: any, transfer?: MessagePort[]): void;
+    /**
      * Removes all listeners, or those of the specified `channel`.
      */
     removeAllListeners(channel: string): this;
@@ -4836,8 +4837,9 @@ For example:
     /**
      * Send an asynchronous message to the main process via `channel`, along with
      * arguments. Arguments will be serialized with the Structured Clone Algorithm,
-     * just like `postMessage`, so prototype chains will not be included. Sending
-     * Functions, Promises, Symbols, WeakMaps, or WeakSets will throw an exception.
+     * just like `window.postMessage`, so prototype chains will not be included.
+     * Sending Functions, Promises, Symbols, WeakMaps, or WeakSets will throw an
+     * exception.
      *
      * > **NOTE**: Sending non-standard JavaScript types such as DOM objects or special
      * Electron objects is deprecated, and will begin throwing an exception starting
@@ -4845,6 +4847,12 @@ For example:
      *
      * The main process handles it by listening for `channel` with the `ipcMain`
      * module.
+     *
+     * If you need to transfer a `MessagePort` to the main process, use
+     * `ipcRenderer.postMessage`.
+     *
+     * If you want to receive a single response from the main process, like the result
+     * of a method call, consider using `ipcRenderer.invoke`.
      */
     send(channel: string, ...args: any[]): void;
     /**
@@ -4852,8 +4860,9 @@ For example:
      *
      * Send a message to the main process via `channel` and expect a result
      * synchronously. Arguments will be serialized with the Structured Clone Algorithm,
-     * just like `postMessage`, so prototype chains will not be included. Sending
-     * Functions, Promises, Symbols, WeakMaps, or WeakSets will throw an exception.
+     * just like `window.postMessage`, so prototype chains will not be included.
+     * Sending Functions, Promises, Symbols, WeakMaps, or WeakSets will throw an
+     * exception.
      *
      * > **NOTE**: Sending non-standard JavaScript types such as DOM objects or special
      * Electron objects is deprecated, and will begin throwing an exception starting
@@ -4882,6 +4891,10 @@ For example:
 
     // Docs: http://electronjs.org/docs/api/structures/ipc-renderer-event
 
+    /**
+     * A list of MessagePorts that were transferred with this message
+     */
+    ports: MessagePort[];
     /**
      * The `IpcRenderer` instance that emitted the event originally
      */
@@ -5153,18 +5166,64 @@ For example:
     visible: boolean;
   }
 
+  class MessageChannelMain extends NodeEventEmitter {
+
+    // Docs: http://electronjs.org/docs/api/message-channel-main
+
+    port1: MessagePortMain;
+    port2: MessagePortMain;
+  }
+
+  class MessagePortMain extends NodeEventEmitter {
+
+    // Docs: http://electronjs.org/docs/api/message-port-main
+
+    /**
+     * Emitted when the remote end of a MessagePortMain object becomes disconnected.
+     */
+    on(event: 'close', listener: Function): this;
+    once(event: 'close', listener: Function): this;
+    addListener(event: 'close', listener: Function): this;
+    removeListener(event: 'close', listener: Function): this;
+    /**
+     * Emitted when a MessagePortMain object receives a message.
+     */
+    on(event: 'message', listener: (messageEvent: MessageEvent) => void): this;
+    once(event: 'message', listener: (messageEvent: MessageEvent) => void): this;
+    addListener(event: 'message', listener: (messageEvent: MessageEvent) => void): this;
+    removeListener(event: 'message', listener: (messageEvent: MessageEvent) => void): this;
+    /**
+     * Disconnects the port, so it is no longer active.
+     */
+    close(): void;
+    /**
+     * Sends a message from the port, and optionally, transfers ownership of objects to
+     * other browsing contexts.
+     */
+    postMessage(message: any, transfer?: MessagePortMain[]): void;
+    /**
+     * Starts the sending of messages queued on the port. Messages will be queued until
+     * this method is called.
+     */
+    start(): void;
+  }
+
   interface MimeTypedBuffer {
 
     // Docs: http://electronjs.org/docs/api/structures/mime-typed-buffer
 
     /**
+     * Charset of the buffer.
+     */
+    charset?: string;
+    /**
      * The actual Buffer content.
      */
     data: Buffer;
     /**
-     * The mimeType of the Buffer that you are sending.
+     * MIME type of the buffer.
      */
-    mimeType: string;
+    mimeType?: string;
   }
 
   interface MouseInputEvent extends InputEvent {
@@ -5268,6 +5327,12 @@ where `SYSTEM_IMAGE_NAME` should be replaced with any value from this list.
      */
     static createFromPath(path: string): NativeImage;
     /**
+     * fulfilled with the file's thumbnail preview image, which is a NativeImage.
+     *
+     * @platform darwin,win32
+     */
+    static createThumbnailFromPath(path: string, maxSize: Size): Promise<Electron.NativeImage>;
+    /**
      * Add an image representation for a specific scale factor. This can be used to
      * explicitly add different scale factor representations to an image. This can be
      * called on empty images.
@@ -5279,8 +5344,11 @@ where `SYSTEM_IMAGE_NAME` should be replaced with any value from this list.
     crop(rect: Rectangle): NativeImage;
     /**
      * The image's aspect ratio.
+     *
+     * If `scaleFactor` is passed, this will return the aspect ratio corresponding to
+     * the image representation most closely matching the passed value.
      */
-    getAspectRatio(): number;
+    getAspectRatio(scaleFactor?: number): number;
     /**
      * A Buffer that contains the image's raw bitmap pixel data.
      *
@@ -5300,7 +5368,16 @@ where `SYSTEM_IMAGE_NAME` should be replaced with any value from this list.
      * @platform darwin
      */
     getNativeHandle(): Buffer;
-    getSize(): Size;
+    /**
+     * An array of all scale factors corresponding to representations for a given
+     * nativeImage.
+     */
+    getScaleFactors(): number[];
+    /**
+     * If `scaleFactor` is passed, this will return the size corresponding to the image
+     * representation most closely matching the passed value.
+     */
+    getSize(scaleFactor?: number): Size;
     /**
      * Whether the image is empty.
      */
@@ -5438,33 +5515,28 @@ Starts recording network events to `path`.
      */
     startLogging(path: string, options?: StartLoggingOptions): Promise<void>;
     /**
-     * resolves with a file path to which network logs were recorded.
+     * resolves when the net log has been flushed to disk.
      *
      * Stops recording network events. If not called, net logging will automatically
      * end when app quits.
      */
-    stopLogging(): Promise<string>;
+    stopLogging(): Promise<void>;
     /**
-     * A `Boolean` property that indicates whether network logs are recorded.
+     * A `Boolean` property that indicates whether network logs are currently being
+     * recorded.
      *
      */
     readonly currentlyLogging: boolean;
-    /**
-     * A `String` property that returns the path to the current log file.
-     *
-     * @deprecated
-     */
-    readonly currentlyLoggingPath: string;
   }
 
-  interface NewWindowEvent extends Event {
+  interface NewWindowWebContentsEvent extends Event {
 
-    // Docs: http://electronjs.org/docs/api/structures/new-window-event
+    // Docs: http://electronjs.org/docs/api/structures/new-window-web-contents-event
 
     newGuest?: BrowserWindow;
   }
 
-  class Notification extends NodeJS.EventEmitter {
+  class Notification extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/notification
 
@@ -5597,6 +5669,64 @@ Starts recording network events to `path`.
     y: number;
   }
 
+  interface PostBody {
+
+    // Docs: http://electronjs.org/docs/api/structures/post-body
+
+    /**
+     * The boundary used to separate multiple parts of the message. Only valid when
+     * `contentType` is `multipart/form-data`.
+     */
+    boundary?: string;
+    /**
+     * The `content-type` header used for the data. One of
+     * `application/x-www-form-urlencoded` or `multipart/form-data`. Corresponds to the
+     * `enctype` attribute of the submitted HTML form.
+     */
+    contentType: string;
+    /**
+     * The post data to be sent to the new window.
+     */
+    data: Array<PostData>;
+  }
+
+  interface PostData {
+
+    // Docs: http://electronjs.org/docs/api/structures/post-data
+
+    /**
+     * The `UUID` of the `Blob` being uploaded. Required for the `blob` type.
+     */
+    blobUUID?: string;
+    /**
+     * The raw bytes of the post data in a `Buffer`. Required for the `rawData` type.
+     */
+    bytes?: string;
+    /**
+     * The path of the file being uploaded. Required for the `file` type.
+     */
+    filePath?: string;
+    /**
+     * The length of the file being uploaded, in bytes. If set to `-1`, the whole file
+     * will be uploaded. Only valid for `file` types.
+     */
+    length?: number;
+    /**
+     * The modification time of the file represented by a double, which is the number
+     * of seconds since the `UNIX Epoch` (Jan 1, 1970). Only valid for `file` types.
+     */
+    modificationTime?: number;
+    /**
+     * The offset from the beginning of the file being uploaded, in bytes. Only valid
+     * for `file` types.
+     */
+    offset?: number;
+    /**
+     * One of the following:
+     */
+    type: ('rawData' | 'file' | 'blob');
+  }
+
   interface PowerMonitor extends NodeJS.EventEmitter {
 
     // Docs: http://electronjs.org/docs/api/power-monitor
@@ -5613,7 +5743,7 @@ Starts recording network events to `path`.
     /**
      * Emitted when the system changes to AC power.
      *
-     * @platform win32
+     * @platform darwin,win32
      */
     on(event: 'on-ac', listener: Function): this;
     once(event: 'on-ac', listener: Function): this;
@@ -5622,7 +5752,7 @@ Starts recording network events to `path`.
     /**
      * Emitted when system changes to battery power.
      *
-     * @platform win32
+     * @platform darwin
      */
     on(event: 'on-battery', listener: Function): this;
     once(event: 'on-battery', listener: Function): this;
@@ -5630,6 +5760,8 @@ Starts recording network events to `path`.
     removeListener(event: 'on-battery', listener: Function): this;
     /**
      * Emitted when system is resuming.
+     *
+     * @platform darwin,win32
      */
     on(event: 'resume', listener: Function): this;
     once(event: 'resume', listener: Function): this;
@@ -5649,6 +5781,8 @@ Starts recording network events to `path`.
     removeListener(event: 'shutdown', listener: Function): this;
     /**
      * Emitted when the system is suspending.
+     *
+     * @platform darwin,win32
      */
     on(event: 'suspend', listener: Function): this;
     once(event: 'suspend', listener: Function): this;
@@ -5815,6 +5949,10 @@ Calculate system idle time in seconds.
      */
     contentVersion: string;
     /**
+     * 3 character code presenting a product's currency based on the ISO 4217 standard.
+     */
+    currencyCode: string;
+    /**
      * The locale formatted price of the product.
      */
     formattedPrice: string;
@@ -5847,97 +5985,101 @@ Calculate system idle time in seconds.
     // Docs: http://electronjs.org/docs/api/protocol
 
     /**
+     * Whether the protocol was successfully intercepted
+     *
      * Intercepts `scheme` protocol and uses `handler` as the protocol's new handler
      * which sends a `Buffer` as a response.
      */
-    interceptBufferProtocol(scheme: string, handler: (request: Request, callback: (buffer?: Buffer) => void) => void, completion?: (error: Error) => void): void;
+    interceptBufferProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (Buffer) | (ProtocolResponse)) => void) => void): boolean;
     /**
+     * Whether the protocol was successfully intercepted
+     *
      * Intercepts `scheme` protocol and uses `handler` as the protocol's new handler
      * which sends a file as a response.
      */
-    interceptFileProtocol(scheme: string, handler: (request: Request, callback: (filePath: string) => void) => void, completion?: (error: Error) => void): void;
+    interceptFileProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (string) | (ProtocolResponse)) => void) => void): boolean;
     /**
+     * Whether the protocol was successfully intercepted
+     *
      * Intercepts `scheme` protocol and uses `handler` as the protocol's new handler
      * which sends a new HTTP request as a response.
      */
-    interceptHttpProtocol(scheme: string, handler: (request: Request, callback: (redirectRequest: RedirectRequest) => void) => void, completion?: (error: Error) => void): void;
+    interceptHttpProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: ProtocolResponse) => void) => void): boolean;
     /**
+     * Whether the protocol was successfully intercepted
+     *
      * Same as `protocol.registerStreamProtocol`, except that it replaces an existing
      * protocol handler.
      */
-    interceptStreamProtocol(scheme: string, handler: (request: Request, callback: (stream?: (NodeJS.ReadableStream) | (StreamProtocolResponse)) => void) => void, completion?: (error: Error) => void): void;
+    interceptStreamProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (NodeJS.ReadableStream) | (ProtocolResponse)) => void) => void): boolean;
     /**
+     * Whether the protocol was successfully intercepted
+     *
      * Intercepts `scheme` protocol and uses `handler` as the protocol's new handler
      * which sends a `String` as a response.
      */
-    interceptStringProtocol(scheme: string, handler: (request: Request, callback: (data?: (string) | (StringProtocolResponse)) => void) => void, completion?: (error: Error) => void): void;
+    interceptStringProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (string) | (ProtocolResponse)) => void) => void): boolean;
     /**
-     * fulfilled with a boolean that indicates whether there is already a handler for
-     * `scheme`.
+     * Whether `scheme` is already intercepted.
      */
-    isProtocolHandled(scheme: string): Promise<boolean>;
+    isProtocolIntercepted(scheme: string): boolean;
     /**
+     * Whether `scheme` is already registered.
+     */
+    isProtocolRegistered(scheme: string): boolean;
+    /**
+     * Whether the protocol was successfully registered
+     *
      * Registers a protocol of `scheme` that will send a `Buffer` as a response.
      *
      * The usage is the same with `registerFileProtocol`, except that the `callback`
-     * should be called with either a `Buffer` object or an object that has the `data`,
-     * `mimeType`, and `charset` properties.
+     * should be called with either a `Buffer` object or an object that has the `data`
+     * property.
 
 Example:
      */
-    registerBufferProtocol(scheme: string, handler: (request: Request, callback: (buffer?: (Buffer) | (MimeTypedBuffer)) => void) => void, completion?: (error: Error) => void): void;
+    registerBufferProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (Buffer) | (ProtocolResponse)) => void) => void): boolean;
     /**
-     * Registers a protocol of `scheme` that will send the file as a response. The
-     * `handler` will be called with `handler(request, callback)` when a `request` is
-     * going to be created with `scheme`. `completion` will be called with
-     * `completion(null)` when `scheme` is successfully registered or
-     * `completion(error)` when failed.
+     * Whether the protocol was successfully registered
+     *
+     * Registers a protocol of `scheme` that will send a file as the response. The
+     * `handler` will be called with `request` and `callback` where `request` is an
+     * incoming request for the `scheme`.
      *
      * To handle the `request`, the `callback` should be called with either the file's
      * path or an object that has a `path` property, e.g. `callback(filePath)` or
-     * `callback({ path: filePath })`. The object may also have a `headers` property
-     * which gives a map of headers to values for the response headers, e.g.
-     * `callback({ path: filePath, headers: {"Content-Security-Policy": "default-src
-     * 'none'"]})`.
-     *
-     * When `callback` is called with nothing, a number, or an object that has an
-     * `error` property, the `request` will fail with the `error` number you specified.
-     * For the available error numbers you can use, please see the net error list.
+     * `callback({ path: filePath })`. The `filePath` must be an absolute path.
      *
      * By default the `scheme` is treated like `http:`, which is parsed differently
-     * than protocols that follow the "generic URI syntax" like `file:`.
+     * from protocols that follow the "generic URI syntax" like `file:`.
      */
-    registerFileProtocol(scheme: string, handler: (request: Request, callback: (filePath?: (string) | (FilePathWithHeaders)) => void) => void, completion?: (error: Error) => void): void;
+    registerFileProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (string) | (ProtocolResponse)) => void) => void): boolean;
     /**
+     * Whether the protocol was successfully registered
+     *
      * Registers a protocol of `scheme` that will send an HTTP request as a response.
      *
      * The usage is the same with `registerFileProtocol`, except that the `callback`
-     * should be called with a `redirectRequest` object that has the `url`, `method`,
-     * `referrer`, `uploadData` and `session` properties.
-     *
-     * By default the HTTP request will reuse the current session. If you want the
-     * request to have a different session you should set `session` to `null`.
-     * 
-For POST requests the `uploadData` object must be provided.
+     * should be called with an object that has the `url` property.
      */
-    registerHttpProtocol(scheme: string, handler: (request: Request, callback: (redirectRequest: RedirectRequest) => void) => void, completion?: (error: Error) => void): void;
+    registerHttpProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: ProtocolResponse) => void) => void): boolean;
     /**
      * **Note:** This method can only be used before the `ready` event of the `app`
      * module gets emitted and can be called only once.
      *
      * Registers the `scheme` as standard, secure, bypasses content security policy for
-     * resources, allows registering ServiceWorker and supports fetch API.
+     * resources, allows registering ServiceWorker and supports fetch API. Specify a
+     * privilege with the value of `true` to enable the capability.
      *
-     * Specify a privilege with the value of `true` to enable the capability. An
-     * example of registering a privileged scheme, with bypassing Content Security
+     * An example of registering a privileged scheme, that bypasses Content Security
      * Policy:
      *
      * A standard scheme adheres to what RFC 3986 calls generic URI syntax. For example
      * `http` and `https` are standard schemes, while `file` is not.
      *
-     * Registering a scheme as standard, will allow relative and absolute resources to
-     * be resolved correctly when served. Otherwise the scheme will behave like the
-     * `file` protocol, but without the ability to resolve relative URLs.
+     * Registering a scheme as standard allows relative and absolute resources to be
+     * resolved correctly when served. Otherwise the scheme will behave like the `file`
+     * protocol, but without the ability to resolve relative URLs.
      *
      * For example when you load following page with custom protocol without
      * registering it as standard scheme, the image will not be loaded because
@@ -5951,52 +6093,52 @@ For POST requests the `uploadData` object must be provided.
      * cookies) are disabled for non standard schemes. So in general if you want to
      * register a custom protocol to replace the `http` protocol, you have to register
      * it as a standard scheme.
-     *
-     * `protocol.registerSchemesAsPrivileged` can be used to replicate the
-     * functionality of the previous `protocol.registerStandardSchemes`,
-     * `webFrame.registerURLSchemeAs*` and `protocol.registerServiceWorkerSchemes`
-     * functions that existed prior to Electron 5.0.0, for example:
-     * 
-**before (<= v4.x)**
-
-**after (>= v5.x)**
      */
     registerSchemesAsPrivileged(customSchemes: CustomScheme[]): void;
     /**
-     * Registers a protocol of `scheme` that will send a `Readable` as a response.
+     * Whether the protocol was successfully registered
      *
-     * The usage is similar to the other `register{Any}Protocol`, except that the
-     * `callback` should be called with either a `Readable` object or an object that
-     * has the `data`, `statusCode`, and `headers` properties.
+     * Registers a protocol of `scheme` that will send a stream as a response.
+     *
+     * The usage is the same with `registerFileProtocol`, except that the `callback`
+     * should be called with either a `ReadableStream` object or an object that has the
+     * `data` property.
      *
      * Example:
      *
      * It is possible to pass any object that implements the readable stream API (emits
      * `data`/`end`/`error` events). For example, here's how a file could be returned:
      */
-    registerStreamProtocol(scheme: string, handler: (request: Request, callback: (stream?: (NodeJS.ReadableStream) | (StreamProtocolResponse)) => void) => void, completion?: (error: Error) => void): void;
+    registerStreamProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (NodeJS.ReadableStream) | (ProtocolResponse)) => void) => void): boolean;
     /**
+     * Whether the protocol was successfully registered
+     *
      * Registers a protocol of `scheme` that will send a `String` as a response.
      *
      * The usage is the same with `registerFileProtocol`, except that the `callback`
-     * should be called with either a `String` or an object that has the `data`,
-     * `mimeType`, and `charset` properties.
+     * should be called with either a `String` or an object that has the `data`
+     * property.
      */
-    registerStringProtocol(scheme: string, handler: (request: Request, callback: (data?: (string) | (StringProtocolResponse)) => void) => void, completion?: (error: Error) => void): void;
+    registerStringProtocol(scheme: string, handler: (request: ProtocolRequest, callback: (response: (string) | (ProtocolResponse)) => void) => void): boolean;
     /**
-     * Remove the interceptor installed for `scheme` and restore its original handler.
+     * Whether the protocol was successfully unintercepted
+     * 
+Remove the interceptor installed for `scheme` and restore its original handler.
      */
-    uninterceptProtocol(scheme: string, completion?: (error: Error) => void): void;
+    uninterceptProtocol(scheme: string): boolean;
     /**
-     * Unregisters the custom protocol of `scheme`.
+     * Whether the protocol was successfully unregistered
+     * 
+Unregisters the custom protocol of `scheme`.
      */
-    unregisterProtocol(scheme: string, completion?: (error: Error) => void): void;
+    unregisterProtocol(scheme: string): boolean;
   }
 
   interface ProtocolRequest {
 
     // Docs: http://electronjs.org/docs/api/structures/protocol-request
 
+    headers: Record<string, string>;
     method: string;
     referrer: string;
     uploadData?: UploadData[];
@@ -6121,7 +6263,7 @@ For POST requests the `uploadData` object must be provided.
     url: string;
   }
 
-  interface Remote extends MainInterface {
+  interface Remote extends RemoteMainInterface {
 
     // Docs: http://electronjs.org/docs/api/remote
 
@@ -6155,53 +6297,6 @@ e.g.
      *
      */
     readonly process: NodeJS.Process;
-  }
-
-  interface RemoveClientCertificate {
-
-    // Docs: http://electronjs.org/docs/api/structures/remove-client-certificate
-
-    /**
-     * Origin of the server whose associated client certificate must be removed from
-     * the cache.
-     */
-    origin: string;
-    /**
-     * `clientCertificate`.
-     */
-    type: string;
-  }
-
-  interface RemovePassword {
-
-    // Docs: http://electronjs.org/docs/api/structures/remove-password
-
-    /**
-     * When provided, the authentication info related to the origin will only be
-     * removed otherwise the entire cache will be cleared.
-     */
-    origin?: string;
-    /**
-     * Credentials of the authentication. Must be provided if removing by `origin`.
-     */
-    password?: string;
-    /**
-     * Realm of the authentication. Must be provided if removing by `origin`.
-     */
-    realm?: string;
-    /**
-     * Scheme of the authentication. Can be `basic`, `digest`, `ntlm`, `negotiate`.
-     * Must be provided if removing by `origin`.
-     */
-    scheme?: ('basic' | 'digest' | 'ntlm' | 'negotiate');
-    /**
-     * `password`.
-     */
-    type: string;
-    /**
-     * Credentials of the authentication. Must be provided if removing by `origin`.
-     */
-    username?: string;
   }
 
   interface Screen extends NodeJS.EventEmitter {
@@ -6351,7 +6446,7 @@ e.g.
     scriptUrl: string;
   }
 
-  class ServiceWorkers extends NodeJS.EventEmitter {
+  class ServiceWorkers extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/service-workers
 
@@ -6392,7 +6487,7 @@ e.g.
     getFromVersionID(versionId: number): ServiceWorkerInfo;
   }
 
-  class Session extends NodeJS.EventEmitter {
+  class Session extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/session
 
@@ -6587,7 +6682,7 @@ e.g.
     /**
      * resolves when the session’s HTTP authentication cache has been cleared.
      */
-    clearAuthCache(options: (RemovePassword) | (RemoveClientCertificate)): Promise<void>;
+    clearAuthCache(): Promise<void>;
     /**
      * resolves when the cache clear operation is complete.
      * 
@@ -6674,6 +6769,13 @@ Clears the host resolver cache.
      */
     getUserAgent(): string;
     /**
+     * Whether or not this session is a persistent one. The default `webContents`
+     * session of a `BrowserWindow` is persistent. When creating a session from a
+     * partition, session prefixed with `persist:` will be persistent, while others
+     * will be temporary.
+     */
+    isPersistent(): boolean;
+    /**
      * An array of all words in app's custom dictionary. Resolves when the full
      * dictionary is loaded from disk.
      */
@@ -6686,6 +6788,7 @@ Clears the host resolver cache.
      * an API that Electron does not support) then they will be logged to the console.
      *
      * Note that Electron does not support the full range of Chrome extensions APIs.
+     * See Supported Extensions APIs for more details on what is supported.
      *
      * Note that in previous versions of Electron, extensions that were loaded would be
      * remembered for future runs of the application. This is no longer the case:
@@ -6696,6 +6799,9 @@ Clears the host resolver cache.
      *
      * **Note:** This API cannot be called before the `ready` event of the `app` module
      * is emitted.
+     *
+     * **Note:** Loading extensions into in-memory (non-persistent) sessions is not
+     * supported and will throw an error.
      */
     loadExtension(path: string): Promise<Electron.Extension>;
     /**
@@ -6730,7 +6836,7 @@ Clears the host resolver cache.
      * Calling `setCertificateVerifyProc(null)` will revert back to default certificate
      * verify proc.
      */
-    setCertificateVerifyProc(proc: ((request: CertificateVerifyProcProcRequest, callback: (verificationResult: number) => void) => void) | (null)): void;
+    setCertificateVerifyProc(proc: ((request: Request, callback: (verificationResult: number) => void) => void) | (null)): void;
     /**
      * Sets download saving directory. By default, the download directory will be the
      * `Downloads` under the respective app folder.
@@ -6741,7 +6847,7 @@ Clears the host resolver cache.
      * `session`. Returning `true` will allow the permission and `false` will reject
      * it. To clear the handler, call `setPermissionCheckHandler(null)`.
      */
-    setPermissionCheckHandler(handler: ((webContents: WebContents, permission: string, requestingOrigin: string, details: Details) => boolean) | (null)): void;
+    setPermissionCheckHandler(handler: ((webContents: WebContents, permission: string, requestingOrigin: string, details: PermissionCheckHandlerHandlerDetails) => boolean) | (null)): void;
     /**
      * Sets the handler which can be used to respond to permission requests for the
      * `session`. Calling `callback(true)` will allow the permission and
@@ -7182,7 +7288,11 @@ Returns an object with system animation settings.
      * consent for `microphone` and `camera` access. macOS 10.15 Catalina or higher
      * requires consent for `screen` access.
      *
-     * @platform darwin
+     * Windows 10 has a global setting controlling `microphone` and `camera` access for
+     * all win32 applications. It will always return `granted` for `screen` and for all
+     * media types on older versions of Windows.
+     *
+     * @platform win32,darwin
      */
     getMediaAccessStatus(mediaType: 'microphone' | 'camera' | 'screen'): ('not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown');
     /**
@@ -7338,7 +7448,7 @@ Some popular `key` and `type`s are:
      *
      * @platform darwin
      */
-    setUserDefault(key: string, type: string, value: string): void;
+    setUserDefault(key: string, type: 'string' | 'boolean' | 'integer' | 'float' | 'double' | 'url' | 'array' | 'dictionary', value: string): void;
     /**
      * The ID of this subscription
      *
@@ -7497,6 +7607,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     static TouchBarColorPicker: typeof TouchBarColorPicker;
     static TouchBarGroup: typeof TouchBarGroup;
     static TouchBarLabel: typeof TouchBarLabel;
+    static TouchBarOtherItemsProxy: typeof TouchBarOtherItemsProxy;
     static TouchBarPopover: typeof TouchBarPopover;
     static TouchBarScrubber: typeof TouchBarScrubber;
     static TouchBarSegmentedControl: typeof TouchBarSegmentedControl;
@@ -7519,7 +7630,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     label: string;
   }
 
-  class TouchBarColorPicker extends NodeJS.EventEmitter {
+  class TouchBarColorPicker extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-color-picker
 
@@ -7531,7 +7642,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     selectedColor: string;
   }
 
-  class TouchBarGroup extends NodeJS.EventEmitter {
+  class TouchBarGroup extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-group
 
@@ -7541,7 +7652,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     constructor(options: TouchBarGroupConstructorOptions);
   }
 
-  class TouchBarLabel extends NodeJS.EventEmitter {
+  class TouchBarLabel extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-label
 
@@ -7554,7 +7665,17 @@ This property is only available on macOS 10.14 Mojave or newer.
     textColor: string;
   }
 
-  class TouchBarPopover extends NodeJS.EventEmitter {
+  class TouchBarOtherItemsProxy extends NodeEventEmitter {
+
+    // Docs: http://electronjs.org/docs/api/touch-bar-other-items-proxy
+
+    /**
+     * TouchBarOtherItemsProxy
+     */
+    constructor();
+  }
+
+  class TouchBarPopover extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-popover
 
@@ -7566,7 +7687,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     label: string;
   }
 
-  class TouchBarScrubber extends NodeJS.EventEmitter {
+  class TouchBarScrubber extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-scrubber
 
@@ -7582,7 +7703,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     showArrowButtons: boolean;
   }
 
-  class TouchBarSegmentedControl extends NodeJS.EventEmitter {
+  class TouchBarSegmentedControl extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-segmented-control
 
@@ -7595,7 +7716,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     selectedIndex: number;
   }
 
-  class TouchBarSlider extends NodeJS.EventEmitter {
+  class TouchBarSlider extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-slider
 
@@ -7609,7 +7730,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     value: number;
   }
 
-  class TouchBarSpacer extends NodeJS.EventEmitter {
+  class TouchBarSpacer extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/touch-bar-spacer
 
@@ -7730,7 +7851,7 @@ This property is only available on macOS 10.14 Mojave or newer.
     transactionState: ('purchasing' | 'purchased' | 'failed' | 'restored' | 'deferred');
   }
 
-  class Tray extends NodeJS.EventEmitter {
+  class Tray extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/tray
 
@@ -8239,7 +8360,7 @@ This value is set to false by default.
     type: string;
   }
 
-  class WebContents extends NodeJS.EventEmitter {
+  class WebContents extends NodeEventEmitter {
 
     // Docs: http://electronjs.org/docs/api/web-contents
 
@@ -8356,6 +8477,13 @@ The usage is the same with the `certificate-error` event of `app`.
                                          params: ContextMenuParams) => void): this;
     /**
      * Emitted when the renderer process crashes or is killed.
+     *
+     * **Deprecated:** This event is superceded by the `render-process-gone` event
+     * which contains more information about why the render process dissapeared. It
+     * isn't always because it crashed.  The `killed` boolean can be replaced by
+     * checking `reason === 'killed'` when you switch to that event.
+     *
+     * @deprecated
      */
     on(event: 'crashed', listener: (event: Event,
                                     killed: boolean) => void): this;
@@ -8937,7 +9065,7 @@ The usage is the same with the `login` event of `app`.
      * reference the new `BrowserWindow` instance, failing to do so may result in
      * unexpected behavior. For example:
      */
-    on(event: 'new-window', listener: (event: NewWindowEvent,
+    on(event: 'new-window', listener: (event: NewWindowWebContentsEvent,
                                        url: string,
                                        frameName: string,
                                        /**
@@ -8958,8 +9086,15 @@ The usage is the same with the `login` event of `app`.
                                         * The referrer that will be passed to the new window. May or may not result in the
                                         * `Referer` header being sent, depending on the referrer policy.
                                         */
-                                       referrer: Referrer) => void): this;
-    once(event: 'new-window', listener: (event: NewWindowEvent,
+                                       referrer: Referrer,
+                                       /**
+                                        * The post data that will be sent to the new window, along with the appropriate
+                                        * headers that will be set. If no post data is to be sent, the value will be
+                                        * `null`. Only defined when the window is being created by a form that set
+                                        * `target=_blank`.
+                                        */
+                                       postBody: PostBody) => void): this;
+    once(event: 'new-window', listener: (event: NewWindowWebContentsEvent,
                                        url: string,
                                        frameName: string,
                                        /**
@@ -8980,8 +9115,15 @@ The usage is the same with the `login` event of `app`.
                                         * The referrer that will be passed to the new window. May or may not result in the
                                         * `Referer` header being sent, depending on the referrer policy.
                                         */
-                                       referrer: Referrer) => void): this;
-    addListener(event: 'new-window', listener: (event: NewWindowEvent,
+                                       referrer: Referrer,
+                                       /**
+                                        * The post data that will be sent to the new window, along with the appropriate
+                                        * headers that will be set. If no post data is to be sent, the value will be
+                                        * `null`. Only defined when the window is being created by a form that set
+                                        * `target=_blank`.
+                                        */
+                                       postBody: PostBody) => void): this;
+    addListener(event: 'new-window', listener: (event: NewWindowWebContentsEvent,
                                        url: string,
                                        frameName: string,
                                        /**
@@ -9002,8 +9144,15 @@ The usage is the same with the `login` event of `app`.
                                         * The referrer that will be passed to the new window. May or may not result in the
                                         * `Referer` header being sent, depending on the referrer policy.
                                         */
-                                       referrer: Referrer) => void): this;
-    removeListener(event: 'new-window', listener: (event: NewWindowEvent,
+                                       referrer: Referrer,
+                                       /**
+                                        * The post data that will be sent to the new window, along with the appropriate
+                                        * headers that will be set. If no post data is to be sent, the value will be
+                                        * `null`. Only defined when the window is being created by a form that set
+                                        * `target=_blank`.
+                                        */
+                                       postBody: PostBody) => void): this;
+    removeListener(event: 'new-window', listener: (event: NewWindowWebContentsEvent,
                                        url: string,
                                        frameName: string,
                                        /**
@@ -9024,7 +9173,14 @@ The usage is the same with the `login` event of `app`.
                                         * The referrer that will be passed to the new window. May or may not result in the
                                         * `Referer` header being sent, depending on the referrer policy.
                                         */
-                                       referrer: Referrer) => void): this;
+                                       referrer: Referrer,
+                                       /**
+                                        * The post data that will be sent to the new window, along with the appropriate
+                                        * headers that will be set. If no post data is to be sent, the value will be
+                                        * `null`. Only defined when the window is being created by a form that set
+                                        * `target=_blank`.
+                                        */
+                                       postBody: PostBody) => void): this;
     /**
      * Emitted when page receives favicon urls.
      */
@@ -9180,6 +9336,18 @@ The usage is the same with the `login` event of `app`.
                                            moduleName: string) => void): this;
     removeListener(event: 'remote-require', listener: (event: IpcMainEvent,
                                            moduleName: string) => void): this;
+    /**
+     * Emitted when the renderer process unexpectedly dissapears.  This is normally
+     * because it was crashed or killed.
+     */
+    on(event: 'render-process-gone', listener: (event: Event,
+                                                details: Details) => void): this;
+    once(event: 'render-process-gone', listener: (event: Event,
+                                                details: Details) => void): this;
+    addListener(event: 'render-process-gone', listener: (event: Event,
+                                                details: Details) => void): this;
+    removeListener(event: 'render-process-gone', listener: (event: Event,
+                                                details: Details) => void): this;
     /**
      * Emitted when the unresponsive web page becomes responsive again.
      */
@@ -9522,6 +9690,11 @@ Works like `executeJavaScript` but evaluates `scripts` in an isolated context.
      */
     getAllSharedWorkers(): SharedWorkerInfo[];
     /**
+     * whether or not this WebContents will throttle animations and timers when the
+     * page becomes backgrounded. This also affects the Page Visibility API.
+     */
+    getBackgroundThrottling(): boolean;
+    /**
      * If *offscreen rendering* is enabled returns the current frame rate.
      */
     getFrameRate(): number;
@@ -9720,6 +9893,22 @@ Would require code like this
      */
     pasteAndMatchStyle(): void;
     /**
+     * Send a message to the renderer process, optionally transferring ownership of
+     * zero or more [`MessagePortMain`][] objects.
+     *
+     * The transferred `MessagePortMain` objects will be available in the renderer
+     * process by accessing the `ports` property of the emitted event. When they arrive
+     * in the renderer, they will be native DOM `MessagePort` objects.
+
+For example:
+     */
+    postMessage(channel: string, message: any, transfer?: MessagePortMain[]): void;
+    /**
+     * When a custom `pageSize` is passed, Chromium attempts to validate platform
+     * specific minumum values for `width_microns` and `height_microns`. Width and
+     * height must both be minimum 353 microns but may be higher on some operating
+     * systems.
+     *
      * Prints window's web page. When `silent` is set to `true`, Electron will pick the
      * system's default printer if `deviceName` is empty and the default settings for
      * printing.
@@ -9739,7 +9928,7 @@ Example usage:
      *
      * By default, an empty `options` will be regarded as:
      *
-     * Use `page-break-before: always;` CSS style to force to print to a new page.
+     * Use `page-break-before: always; ` CSS style to force to print to a new page.
      * 
 An example of `webContents.printToPDF`:
      */
@@ -9860,8 +10049,6 @@ An example of showing devtools in a `BrowserWindow`:
     setFrameRate(fps: number): void;
     /**
      * Ignore application menu shortcuts while this web contents is focused.
-     *
-     * @experimental
      */
     setIgnoreMenuShortcuts(ignore: boolean): void;
     /**
@@ -9941,6 +10128,7 @@ Takes a V8 heap snapshot and saves it to `filePath`.
      */
     unselect(): void;
     audioMuted: boolean;
+    backgroundThrottling: boolean;
     readonly debugger: Debugger;
     readonly devToolsWebContents: (WebContents) | (null);
     frameRate: number;
@@ -11175,7 +11363,7 @@ See webContents.sendInputEvent for detailed description of `event` object.
      */
     opacity?: number;
     /**
-     * Forces using dark theme for the window, only works on some GTK desktop
+     * Forces using dark theme for the window, only works on some GTK+3 desktop
      * environments. Default is `false`.
      */
     darkTheme?: boolean;
@@ -11188,6 +11376,11 @@ See webContents.sendInputEvent for detailed description of `event` object.
      * The type of window, default is normal window. See more about this below.
      */
     type?: string;
+    /**
+     * Specify how the material appearance should reflect window activity state on
+     * macOS. Must be used with the `vibrancy` property. Possible values are:
+     */
+    visualEffectState?: ('followWindow' | 'active' | 'inactive');
     /**
      * The style of window title bar. Default is `default`. Possible values are:
      */
@@ -11249,20 +11442,6 @@ See webContents.sendInputEvent for detailed description of `event` object.
      * The message to display to the user.
      */
     message: string;
-  }
-
-  interface CertificateVerifyProcProcRequest {
-    hostname: string;
-    certificate: Certificate;
-    validatedCertificate: Certificate;
-    /**
-     * Verification result from chromium.
-     */
-    verificationResult: string;
-    /**
-     * Error code.
-     */
-    errorCode: number;
   }
 
   interface ClearStorageDataOptions {
@@ -11513,6 +11692,11 @@ See webContents.sendInputEvent for detailed description of `event` object.
      * between sessions.
      */
     expirationDate?: number;
+    /**
+     * The Same Site policy to apply to this cookie.  Can be `unspecified`,
+     * `no_restriction`, `lax` or `strict`.  Default is `no_restriction`.
+     */
+    sameSite?: ('unspecified' | 'no_restriction' | 'lax' | 'strict');
   }
 
   interface CrashReporterStartOptions {
@@ -11549,10 +11733,7 @@ See webContents.sendInputEvent for detailed description of `event` object.
     rateLimit?: boolean;
     /**
      * If true, crash reports will be compressed and uploaded with `Content-Encoding:
-     * gzip`. Not all collection servers support compressed payloads. Default is
-     * `false`.
-     *
-     * @platform darwin,win32
+     * gzip`. Default is `false`.
      */
     compress?: boolean;
     /**
@@ -11643,21 +11824,9 @@ See webContents.sendInputEvent for detailed description of `event` object.
 
   interface Details {
     /**
-     * The security orign of the `media` check.
+     * The reason the render process is gone.  Possible values:
      */
-    securityOrigin: string;
-    /**
-     * The type of media access being requested, can be `video`, `audio` or `unknown`
-     */
-    mediaType: ('video' | 'audio' | 'unknown');
-    /**
-     * The last URL the requesting frame loaded
-     */
-    requestingUrl: string;
-    /**
-     * Whether the frame making the request is the main frame
-     */
-    isMainFrame: boolean;
+    reason: ('clean-exit' | 'abnormal-exit' | 'killed' | 'crashed' | 'oom' | 'launch-failure' | 'integrity-failure');
   }
 
   interface DidChangeThemeColorEvent extends Event {
@@ -11883,6 +12052,10 @@ See webContents.sendInputEvent for detailed description of `event` object.
      */
     isAutoRepeat: boolean;
     /**
+     * Equivalent to KeyboardEvent.isComposing.
+     */
+    isComposing: boolean;
+    /**
      * Equivalent to KeyboardEvent.shiftKey.
      */
     shift: boolean;
@@ -12040,7 +12213,7 @@ See webContents.sendInputEvent for detailed description of `event` object.
      * Will be called with `click(menuItem, browserWindow, event)` when the menu item
      * is clicked.
      */
-    click?: (menuItem: MenuItem, browserWindow: BrowserWindow, event: KeyboardEvent) => void;
+    click?: (menuItem: MenuItem, browserWindow: (BrowserWindow) | (undefined), event: KeyboardEvent) => void;
     /**
      * Can be `undo`, `redo`, `cut`, `copy`, `paste`, `pasteAndMatchStyle`, `delete`,
      * `selectAll`, `reload`, `forceReload`, `toggleDevTools`, `resetZoom`, `zoomIn`,
@@ -12299,6 +12472,11 @@ See webContents.sendInputEvent for detailed description of `event` object.
      * The line number of the source that triggered this console message
      */
     lineNumber: number;
+  }
+
+  interface MessageEvent {
+    data: any;
+    ports: MessagePortMain[];
   }
 
   interface MoveToApplicationsFolderOptions {
@@ -12667,6 +12845,25 @@ See webContents.sendInputEvent for detailed description of `event` object.
     quantity: number;
   }
 
+  interface PermissionCheckHandlerHandlerDetails {
+    /**
+     * The security orign of the `media` check.
+     */
+    securityOrigin: string;
+    /**
+     * The type of media access being requested, can be `video`, `audio` or `unknown`
+     */
+    mediaType: ('video' | 'audio' | 'unknown');
+    /**
+     * The last URL the requesting frame loaded
+     */
+    requestingUrl: string;
+    /**
+     * Whether the frame making the request is the main frame
+     */
+    isMainFrame: boolean;
+  }
+
   interface PermissionRequestHandlerHandlerDetails {
     /**
      * The url of the `openExternal` request.
@@ -12813,24 +13010,23 @@ See webContents.sendInputEvent for detailed description of `event` object.
     url: string;
   }
 
-  interface RedirectRequest {
-    url: string;
-    method?: string;
-    session?: (Session) | (null);
-    uploadData?: ProtocolResponseUploadData;
-  }
-
   interface RelaunchOptions {
     args?: string[];
     execPath?: string;
   }
 
   interface Request {
-    url: string;
-    headers: Record<string, string>;
-    referrer: string;
-    method: string;
-    uploadData: UploadData[];
+    hostname: string;
+    certificate: Certificate;
+    validatedCertificate: Certificate;
+    /**
+     * Verification result from chromium.
+     */
+    verificationResult: string;
+    /**
+     * Error code.
+     */
+    errorCode: number;
   }
 
   interface ResizeOptions {
@@ -13312,6 +13508,15 @@ See webContents.sendInputEvent for detailed description of `event` object.
     total: number;
   }
 
+  interface VisibleOnAllWorkspacesOptions {
+    /**
+     * Sets whether the window should be visible above fullscreen windows
+     *
+     * @platform darwin
+     */
+    visibleOnFullScreen?: boolean;
+  }
+
   interface WebContentsPrintOptions {
     /**
      * Don't ask user for print settings. Default is `false`.
@@ -13590,7 +13795,7 @@ See webContents.sendInputEvent for detailed description of `event` object.
      */
     sandbox?: boolean;
     /**
-     * Whether to enable the `remote` module. Default is `true`.
+     * Whether to enable the `remote` module. Default is `false`.
      */
     enableRemoteModule?: boolean;
     /**
@@ -13719,6 +13924,13 @@ See webContents.sendInputEvent for detailed description of `event` object.
      */
     contextIsolation?: boolean;
     /**
+     * If true, values returned from `webFrame.executeJavaScript` will be sanitized to
+     * ensure JS values can't unsafely cross between worlds when using
+     * `contextIsolation`.  The default is `false`. In Electron 12, the default will be
+     * changed to `true`. _Deprecated_
+     */
+    worldSafeExecuteJavaScript?: boolean;
+    /**
      * Whether to use native `window.open()`. Defaults to `false`. Child windows will
      * always have node integration disabled unless `nodeIntegrationInSubFrames` is
      * true. **Note:** This option is currently experimental.
@@ -13784,6 +13996,10 @@ See webContents.sendInputEvent for detailed description of `event` object.
      * Whether to enable the WebSQL api. Default is `true`.
      */
     enableWebSQL?: boolean;
+    /**
+     * Enforces the v8 code caching policy used by blink. Accepted values are
+     */
+    v8CacheOptions?: ('none' | 'code' | 'bypassHeatCheck' | 'bypassHeatCheckAndEagerCompile');
   }
 
   interface DefaultFontFamily {
@@ -13813,10 +14029,755 @@ See webContents.sendInputEvent for detailed description of `event` object.
     fantasy?: string;
   }
 
+  interface RemoteMainInterface {
+    app: App;
+    autoUpdater: AutoUpdater;
+    BrowserView: typeof BrowserView;
+    BrowserWindow: typeof BrowserWindow;
+    ClientRequest: typeof ClientRequest;
+    clipboard: Clipboard;
+    CommandLine: typeof CommandLine;
+    contentTracing: ContentTracing;
+    Cookies: typeof Cookies;
+    crashReporter: CrashReporter;
+    Debugger: typeof Debugger;
+    desktopCapturer: DesktopCapturer;
+    dialog: Dialog;
+    Dock: typeof Dock;
+    DownloadItem: typeof DownloadItem;
+    globalShortcut: GlobalShortcut;
+    inAppPurchase: InAppPurchase;
+    IncomingMessage: typeof IncomingMessage;
+    ipcMain: IpcMain;
+    Menu: typeof Menu;
+    MenuItem: typeof MenuItem;
+    MessageChannelMain: typeof MessageChannelMain;
+    MessagePortMain: typeof MessagePortMain;
+    nativeImage: typeof NativeImage;
+    nativeTheme: NativeTheme;
+    net: Net;
+    netLog: NetLog;
+    Notification: typeof Notification;
+    powerMonitor: PowerMonitor;
+    powerSaveBlocker: PowerSaveBlocker;
+    protocol: Protocol;
+    screen: Screen;
+    ServiceWorkers: typeof ServiceWorkers;
+    session: typeof Session;
+    shell: Shell;
+    systemPreferences: SystemPreferences;
+    TouchBar: typeof TouchBar;
+    TouchBarButton: typeof TouchBarButton;
+    TouchBarColorPicker: typeof TouchBarColorPicker;
+    TouchBarGroup: typeof TouchBarGroup;
+    TouchBarLabel: typeof TouchBarLabel;
+    TouchBarOtherItemsProxy: typeof TouchBarOtherItemsProxy;
+    TouchBarPopover: typeof TouchBarPopover;
+    TouchBarScrubber: typeof TouchBarScrubber;
+    TouchBarSegmentedControl: typeof TouchBarSegmentedControl;
+    TouchBarSlider: typeof TouchBarSlider;
+    TouchBarSpacer: typeof TouchBarSpacer;
+    Tray: typeof Tray;
+    webContents: typeof WebContents;
+    WebRequest: typeof WebRequest;
+  }
+
+
+
+  namespace Common {
+    const clipboard: Clipboard;
+    const crashReporter: CrashReporter;
+    const desktopCapturer: DesktopCapturer;
+    class NativeImage extends Electron.NativeImage {}
+    type nativeImage = NativeImage;
+    const nativeImage: typeof NativeImage;
+    const shell: Shell;
+    type AboutPanelOptionsOptions = Electron.AboutPanelOptionsOptions;
+    type AddRepresentationOptions = Electron.AddRepresentationOptions;
+    type AnimationSettings = Electron.AnimationSettings;
+    type AppDetailsOptions = Electron.AppDetailsOptions;
+    type AuthenticationResponseDetails = Electron.AuthenticationResponseDetails;
+    type AuthInfo = Electron.AuthInfo;
+    type AutoResizeOptions = Electron.AutoResizeOptions;
+    type BeforeSendResponse = Electron.BeforeSendResponse;
+    type BitmapOptions = Electron.BitmapOptions;
+    type BlinkMemoryInfo = Electron.BlinkMemoryInfo;
+    type BrowserViewConstructorOptions = Electron.BrowserViewConstructorOptions;
+    type BrowserWindowConstructorOptions = Electron.BrowserWindowConstructorOptions;
+    type CertificateTrustDialogOptions = Electron.CertificateTrustDialogOptions;
+    type ClearStorageDataOptions = Electron.ClearStorageDataOptions;
+    type ClientRequestConstructorOptions = Electron.ClientRequestConstructorOptions;
+    type Config = Electron.Config;
+    type ConsoleMessageEvent = Electron.ConsoleMessageEvent;
+    type ContextMenuParams = Electron.ContextMenuParams;
+    type CookiesGetFilter = Electron.CookiesGetFilter;
+    type CookiesSetDetails = Electron.CookiesSetDetails;
+    type CrashReporterStartOptions = Electron.CrashReporterStartOptions;
+    type CreateFromBitmapOptions = Electron.CreateFromBitmapOptions;
+    type CreateFromBufferOptions = Electron.CreateFromBufferOptions;
+    type CreateInterruptedDownloadOptions = Electron.CreateInterruptedDownloadOptions;
+    type Data = Electron.Data;
+    type Details = Electron.Details;
+    type DidChangeThemeColorEvent = Electron.DidChangeThemeColorEvent;
+    type DidFailLoadEvent = Electron.DidFailLoadEvent;
+    type DidFrameFinishLoadEvent = Electron.DidFrameFinishLoadEvent;
+    type DidNavigateEvent = Electron.DidNavigateEvent;
+    type DidNavigateInPageEvent = Electron.DidNavigateInPageEvent;
+    type DisplayBalloonOptions = Electron.DisplayBalloonOptions;
+    type EnableNetworkEmulationOptions = Electron.EnableNetworkEmulationOptions;
+    type FeedURLOptions = Electron.FeedURLOptions;
+    type FileIconOptions = Electron.FileIconOptions;
+    type Filter = Electron.Filter;
+    type FindInPageOptions = Electron.FindInPageOptions;
+    type FocusOptions = Electron.FocusOptions;
+    type FoundInPageEvent = Electron.FoundInPageEvent;
+    type FromPartitionOptions = Electron.FromPartitionOptions;
+    type HeadersReceivedResponse = Electron.HeadersReceivedResponse;
+    type HeapStatistics = Electron.HeapStatistics;
+    type IgnoreMouseEventsOptions = Electron.IgnoreMouseEventsOptions;
+    type ImportCertificateOptions = Electron.ImportCertificateOptions;
+    type Info = Electron.Info;
+    type Input = Electron.Input;
+    type InsertCSSOptions = Electron.InsertCSSOptions;
+    type IpcMessageEvent = Electron.IpcMessageEvent;
+    type Item = Electron.Item;
+    type JumpListSettings = Electron.JumpListSettings;
+    type LoadCommitEvent = Electron.LoadCommitEvent;
+    type LoadFileOptions = Electron.LoadFileOptions;
+    type LoadURLOptions = Electron.LoadURLOptions;
+    type LoginItemSettings = Electron.LoginItemSettings;
+    type LoginItemSettingsOptions = Electron.LoginItemSettingsOptions;
+    type MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+    type MessageBoxOptions = Electron.MessageBoxOptions;
+    type MessageBoxReturnValue = Electron.MessageBoxReturnValue;
+    type MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
+    type MessageDetails = Electron.MessageDetails;
+    type MessageEvent = Electron.MessageEvent;
+    type MoveToApplicationsFolderOptions = Electron.MoveToApplicationsFolderOptions;
+    type NewWindowEvent = Electron.NewWindowEvent;
+    type NotificationConstructorOptions = Electron.NotificationConstructorOptions;
+    type OnBeforeRedirectListenerDetails = Electron.OnBeforeRedirectListenerDetails;
+    type OnBeforeRequestListenerDetails = Electron.OnBeforeRequestListenerDetails;
+    type OnBeforeSendHeadersListenerDetails = Electron.OnBeforeSendHeadersListenerDetails;
+    type OnCompletedListenerDetails = Electron.OnCompletedListenerDetails;
+    type OnErrorOccurredListenerDetails = Electron.OnErrorOccurredListenerDetails;
+    type OnHeadersReceivedListenerDetails = Electron.OnHeadersReceivedListenerDetails;
+    type OnResponseStartedListenerDetails = Electron.OnResponseStartedListenerDetails;
+    type OnSendHeadersListenerDetails = Electron.OnSendHeadersListenerDetails;
+    type OpenDevToolsOptions = Electron.OpenDevToolsOptions;
+    type OpenDialogOptions = Electron.OpenDialogOptions;
+    type OpenDialogReturnValue = Electron.OpenDialogReturnValue;
+    type OpenDialogSyncOptions = Electron.OpenDialogSyncOptions;
+    type OpenExternalOptions = Electron.OpenExternalOptions;
+    type Options = Electron.Options;
+    type PageFaviconUpdatedEvent = Electron.PageFaviconUpdatedEvent;
+    type PageTitleUpdatedEvent = Electron.PageTitleUpdatedEvent;
+    type Parameters = Electron.Parameters;
+    type Payment = Electron.Payment;
+    type PermissionCheckHandlerHandlerDetails = Electron.PermissionCheckHandlerHandlerDetails;
+    type PermissionRequestHandlerHandlerDetails = Electron.PermissionRequestHandlerHandlerDetails;
+    type PluginCrashedEvent = Electron.PluginCrashedEvent;
+    type PopupOptions = Electron.PopupOptions;
+    type PreconnectOptions = Electron.PreconnectOptions;
+    type PrintToPDFOptions = Electron.PrintToPDFOptions;
+    type Privileges = Electron.Privileges;
+    type ProgressBarOptions = Electron.ProgressBarOptions;
+    type Provider = Electron.Provider;
+    type ReadBookmark = Electron.ReadBookmark;
+    type RelaunchOptions = Electron.RelaunchOptions;
+    type Request = Electron.Request;
+    type ResizeOptions = Electron.ResizeOptions;
+    type ResourceUsage = Electron.ResourceUsage;
+    type Response = Electron.Response;
+    type Result = Electron.Result;
+    type SaveDialogOptions = Electron.SaveDialogOptions;
+    type SaveDialogReturnValue = Electron.SaveDialogReturnValue;
+    type SaveDialogSyncOptions = Electron.SaveDialogSyncOptions;
+    type Settings = Electron.Settings;
+    type SourcesOptions = Electron.SourcesOptions;
+    type StartLoggingOptions = Electron.StartLoggingOptions;
+    type SystemMemoryInfo = Electron.SystemMemoryInfo;
+    type ToBitmapOptions = Electron.ToBitmapOptions;
+    type ToDataURLOptions = Electron.ToDataURLOptions;
+    type ToPNGOptions = Electron.ToPNGOptions;
+    type TouchBarButtonConstructorOptions = Electron.TouchBarButtonConstructorOptions;
+    type TouchBarColorPickerConstructorOptions = Electron.TouchBarColorPickerConstructorOptions;
+    type TouchBarConstructorOptions = Electron.TouchBarConstructorOptions;
+    type TouchBarGroupConstructorOptions = Electron.TouchBarGroupConstructorOptions;
+    type TouchBarLabelConstructorOptions = Electron.TouchBarLabelConstructorOptions;
+    type TouchBarPopoverConstructorOptions = Electron.TouchBarPopoverConstructorOptions;
+    type TouchBarScrubberConstructorOptions = Electron.TouchBarScrubberConstructorOptions;
+    type TouchBarSegmentedControlConstructorOptions = Electron.TouchBarSegmentedControlConstructorOptions;
+    type TouchBarSliderConstructorOptions = Electron.TouchBarSliderConstructorOptions;
+    type TouchBarSpacerConstructorOptions = Electron.TouchBarSpacerConstructorOptions;
+    type TraceBufferUsageReturnValue = Electron.TraceBufferUsageReturnValue;
+    type UpdateTargetUrlEvent = Electron.UpdateTargetUrlEvent;
+    type UploadProgress = Electron.UploadProgress;
+    type VisibleOnAllWorkspacesOptions = Electron.VisibleOnAllWorkspacesOptions;
+    type WebContentsPrintOptions = Electron.WebContentsPrintOptions;
+    type WebviewTagPrintOptions = Electron.WebviewTagPrintOptions;
+    type WillNavigateEvent = Electron.WillNavigateEvent;
+    type EditFlags = Electron.EditFlags;
+    type FoundInPageResult = Electron.FoundInPageResult;
+    type Margins = Electron.Margins;
+    type MediaFlags = Electron.MediaFlags;
+    type WebPreferences = Electron.WebPreferences;
+    type DefaultFontFamily = Electron.DefaultFontFamily;
+    type BluetoothDevice = Electron.BluetoothDevice;
+    type Certificate = Electron.Certificate;
+    type CertificatePrincipal = Electron.CertificatePrincipal;
+    type Cookie = Electron.Cookie;
+    type CPUUsage = Electron.CPUUsage;
+    type CrashReport = Electron.CrashReport;
+    type CustomScheme = Electron.CustomScheme;
+    type DesktopCapturerSource = Electron.DesktopCapturerSource;
+    type Display = Electron.Display;
+    type Event = Electron.Event;
+    type Extension = Electron.Extension;
+    type ExtensionInfo = Electron.ExtensionInfo;
+    type FileFilter = Electron.FileFilter;
+    type FilePathWithHeaders = Electron.FilePathWithHeaders;
+    type GPUFeatureStatus = Electron.GPUFeatureStatus;
+    type InputEvent = Electron.InputEvent;
+    type IOCounters = Electron.IOCounters;
+    type IpcMainEvent = Electron.IpcMainEvent;
+    type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
+    type IpcRendererEvent = Electron.IpcRendererEvent;
+    type JumpListCategory = Electron.JumpListCategory;
+    type JumpListItem = Electron.JumpListItem;
+    type KeyboardEvent = Electron.KeyboardEvent;
+    type KeyboardInputEvent = Electron.KeyboardInputEvent;
+    type MemoryInfo = Electron.MemoryInfo;
+    type MemoryUsageDetails = Electron.MemoryUsageDetails;
+    type MimeTypedBuffer = Electron.MimeTypedBuffer;
+    type MouseInputEvent = Electron.MouseInputEvent;
+    type MouseWheelInputEvent = Electron.MouseWheelInputEvent;
+    type NewWindowWebContentsEvent = Electron.NewWindowWebContentsEvent;
+    type NotificationAction = Electron.NotificationAction;
+    type Point = Electron.Point;
+    type PostBody = Electron.PostBody;
+    type PostData = Electron.PostData;
+    type PrinterInfo = Electron.PrinterInfo;
+    type ProcessMemoryInfo = Electron.ProcessMemoryInfo;
+    type ProcessMetric = Electron.ProcessMetric;
+    type Product = Electron.Product;
+    type ProtocolRequest = Electron.ProtocolRequest;
+    type ProtocolResponse = Electron.ProtocolResponse;
+    type ProtocolResponseUploadData = Electron.ProtocolResponseUploadData;
+    type Rectangle = Electron.Rectangle;
+    type Referrer = Electron.Referrer;
+    type ScrubberItem = Electron.ScrubberItem;
+    type SegmentedControlSegment = Electron.SegmentedControlSegment;
+    type ServiceWorkerInfo = Electron.ServiceWorkerInfo;
+    type SharedWorkerInfo = Electron.SharedWorkerInfo;
+    type ShortcutDetails = Electron.ShortcutDetails;
+    type Size = Electron.Size;
+    type StreamProtocolResponse = Electron.StreamProtocolResponse;
+    type StringProtocolResponse = Electron.StringProtocolResponse;
+    type Task = Electron.Task;
+    type ThumbarButton = Electron.ThumbarButton;
+    type TraceCategoriesAndOptions = Electron.TraceCategoriesAndOptions;
+    type TraceConfig = Electron.TraceConfig;
+    type Transaction = Electron.Transaction;
+    type UploadBlob = Electron.UploadBlob;
+    type UploadData = Electron.UploadData;
+    type UploadFile = Electron.UploadFile;
+    type UploadRawData = Electron.UploadRawData;
+    type WebSource = Electron.WebSource;
+  }
+
+  namespace Main {
+    const app: App;
+    const autoUpdater: AutoUpdater;
+    class BrowserView extends Electron.BrowserView {}
+    class BrowserWindow extends Electron.BrowserWindow {}
+    class ClientRequest extends Electron.ClientRequest {}
+    class CommandLine extends Electron.CommandLine {}
+    const contentTracing: ContentTracing;
+    class Cookies extends Electron.Cookies {}
+    class Debugger extends Electron.Debugger {}
+    const dialog: Dialog;
+    class Dock extends Electron.Dock {}
+    class DownloadItem extends Electron.DownloadItem {}
+    const globalShortcut: GlobalShortcut;
+    const inAppPurchase: InAppPurchase;
+    class IncomingMessage extends Electron.IncomingMessage {}
+    const ipcMain: IpcMain;
+    class Menu extends Electron.Menu {}
+    class MenuItem extends Electron.MenuItem {}
+    class MessageChannelMain extends Electron.MessageChannelMain {}
+    class MessagePortMain extends Electron.MessagePortMain {}
+    const nativeTheme: NativeTheme;
+    const net: Net;
+    const netLog: NetLog;
+    class Notification extends Electron.Notification {}
+    const powerMonitor: PowerMonitor;
+    const powerSaveBlocker: PowerSaveBlocker;
+    const protocol: Protocol;
+    const screen: Screen;
+    class ServiceWorkers extends Electron.ServiceWorkers {}
+    class Session extends Electron.Session {}
+    type session = Session;
+    const session: typeof Session;
+    const systemPreferences: SystemPreferences;
+    class TouchBar extends Electron.TouchBar {}
+    class TouchBarButton extends Electron.TouchBarButton {}
+    class TouchBarColorPicker extends Electron.TouchBarColorPicker {}
+    class TouchBarGroup extends Electron.TouchBarGroup {}
+    class TouchBarLabel extends Electron.TouchBarLabel {}
+    class TouchBarOtherItemsProxy extends Electron.TouchBarOtherItemsProxy {}
+    class TouchBarPopover extends Electron.TouchBarPopover {}
+    class TouchBarScrubber extends Electron.TouchBarScrubber {}
+    class TouchBarSegmentedControl extends Electron.TouchBarSegmentedControl {}
+    class TouchBarSlider extends Electron.TouchBarSlider {}
+    class TouchBarSpacer extends Electron.TouchBarSpacer {}
+    class Tray extends Electron.Tray {}
+    class WebContents extends Electron.WebContents {}
+    type webContents = WebContents;
+    const webContents: typeof WebContents;
+    class WebRequest extends Electron.WebRequest {}
+    type AboutPanelOptionsOptions = Electron.AboutPanelOptionsOptions;
+    type AddRepresentationOptions = Electron.AddRepresentationOptions;
+    type AnimationSettings = Electron.AnimationSettings;
+    type AppDetailsOptions = Electron.AppDetailsOptions;
+    type AuthenticationResponseDetails = Electron.AuthenticationResponseDetails;
+    type AuthInfo = Electron.AuthInfo;
+    type AutoResizeOptions = Electron.AutoResizeOptions;
+    type BeforeSendResponse = Electron.BeforeSendResponse;
+    type BitmapOptions = Electron.BitmapOptions;
+    type BlinkMemoryInfo = Electron.BlinkMemoryInfo;
+    type BrowserViewConstructorOptions = Electron.BrowserViewConstructorOptions;
+    type BrowserWindowConstructorOptions = Electron.BrowserWindowConstructorOptions;
+    type CertificateTrustDialogOptions = Electron.CertificateTrustDialogOptions;
+    type ClearStorageDataOptions = Electron.ClearStorageDataOptions;
+    type ClientRequestConstructorOptions = Electron.ClientRequestConstructorOptions;
+    type Config = Electron.Config;
+    type ConsoleMessageEvent = Electron.ConsoleMessageEvent;
+    type ContextMenuParams = Electron.ContextMenuParams;
+    type CookiesGetFilter = Electron.CookiesGetFilter;
+    type CookiesSetDetails = Electron.CookiesSetDetails;
+    type CrashReporterStartOptions = Electron.CrashReporterStartOptions;
+    type CreateFromBitmapOptions = Electron.CreateFromBitmapOptions;
+    type CreateFromBufferOptions = Electron.CreateFromBufferOptions;
+    type CreateInterruptedDownloadOptions = Electron.CreateInterruptedDownloadOptions;
+    type Data = Electron.Data;
+    type Details = Electron.Details;
+    type DidChangeThemeColorEvent = Electron.DidChangeThemeColorEvent;
+    type DidFailLoadEvent = Electron.DidFailLoadEvent;
+    type DidFrameFinishLoadEvent = Electron.DidFrameFinishLoadEvent;
+    type DidNavigateEvent = Electron.DidNavigateEvent;
+    type DidNavigateInPageEvent = Electron.DidNavigateInPageEvent;
+    type DisplayBalloonOptions = Electron.DisplayBalloonOptions;
+    type EnableNetworkEmulationOptions = Electron.EnableNetworkEmulationOptions;
+    type FeedURLOptions = Electron.FeedURLOptions;
+    type FileIconOptions = Electron.FileIconOptions;
+    type Filter = Electron.Filter;
+    type FindInPageOptions = Electron.FindInPageOptions;
+    type FocusOptions = Electron.FocusOptions;
+    type FoundInPageEvent = Electron.FoundInPageEvent;
+    type FromPartitionOptions = Electron.FromPartitionOptions;
+    type HeadersReceivedResponse = Electron.HeadersReceivedResponse;
+    type HeapStatistics = Electron.HeapStatistics;
+    type IgnoreMouseEventsOptions = Electron.IgnoreMouseEventsOptions;
+    type ImportCertificateOptions = Electron.ImportCertificateOptions;
+    type Info = Electron.Info;
+    type Input = Electron.Input;
+    type InsertCSSOptions = Electron.InsertCSSOptions;
+    type IpcMessageEvent = Electron.IpcMessageEvent;
+    type Item = Electron.Item;
+    type JumpListSettings = Electron.JumpListSettings;
+    type LoadCommitEvent = Electron.LoadCommitEvent;
+    type LoadFileOptions = Electron.LoadFileOptions;
+    type LoadURLOptions = Electron.LoadURLOptions;
+    type LoginItemSettings = Electron.LoginItemSettings;
+    type LoginItemSettingsOptions = Electron.LoginItemSettingsOptions;
+    type MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+    type MessageBoxOptions = Electron.MessageBoxOptions;
+    type MessageBoxReturnValue = Electron.MessageBoxReturnValue;
+    type MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
+    type MessageDetails = Electron.MessageDetails;
+    type MessageEvent = Electron.MessageEvent;
+    type MoveToApplicationsFolderOptions = Electron.MoveToApplicationsFolderOptions;
+    type NewWindowEvent = Electron.NewWindowEvent;
+    type NotificationConstructorOptions = Electron.NotificationConstructorOptions;
+    type OnBeforeRedirectListenerDetails = Electron.OnBeforeRedirectListenerDetails;
+    type OnBeforeRequestListenerDetails = Electron.OnBeforeRequestListenerDetails;
+    type OnBeforeSendHeadersListenerDetails = Electron.OnBeforeSendHeadersListenerDetails;
+    type OnCompletedListenerDetails = Electron.OnCompletedListenerDetails;
+    type OnErrorOccurredListenerDetails = Electron.OnErrorOccurredListenerDetails;
+    type OnHeadersReceivedListenerDetails = Electron.OnHeadersReceivedListenerDetails;
+    type OnResponseStartedListenerDetails = Electron.OnResponseStartedListenerDetails;
+    type OnSendHeadersListenerDetails = Electron.OnSendHeadersListenerDetails;
+    type OpenDevToolsOptions = Electron.OpenDevToolsOptions;
+    type OpenDialogOptions = Electron.OpenDialogOptions;
+    type OpenDialogReturnValue = Electron.OpenDialogReturnValue;
+    type OpenDialogSyncOptions = Electron.OpenDialogSyncOptions;
+    type OpenExternalOptions = Electron.OpenExternalOptions;
+    type Options = Electron.Options;
+    type PageFaviconUpdatedEvent = Electron.PageFaviconUpdatedEvent;
+    type PageTitleUpdatedEvent = Electron.PageTitleUpdatedEvent;
+    type Parameters = Electron.Parameters;
+    type Payment = Electron.Payment;
+    type PermissionCheckHandlerHandlerDetails = Electron.PermissionCheckHandlerHandlerDetails;
+    type PermissionRequestHandlerHandlerDetails = Electron.PermissionRequestHandlerHandlerDetails;
+    type PluginCrashedEvent = Electron.PluginCrashedEvent;
+    type PopupOptions = Electron.PopupOptions;
+    type PreconnectOptions = Electron.PreconnectOptions;
+    type PrintToPDFOptions = Electron.PrintToPDFOptions;
+    type Privileges = Electron.Privileges;
+    type ProgressBarOptions = Electron.ProgressBarOptions;
+    type Provider = Electron.Provider;
+    type ReadBookmark = Electron.ReadBookmark;
+    type RelaunchOptions = Electron.RelaunchOptions;
+    type Request = Electron.Request;
+    type ResizeOptions = Electron.ResizeOptions;
+    type ResourceUsage = Electron.ResourceUsage;
+    type Response = Electron.Response;
+    type Result = Electron.Result;
+    type SaveDialogOptions = Electron.SaveDialogOptions;
+    type SaveDialogReturnValue = Electron.SaveDialogReturnValue;
+    type SaveDialogSyncOptions = Electron.SaveDialogSyncOptions;
+    type Settings = Electron.Settings;
+    type SourcesOptions = Electron.SourcesOptions;
+    type StartLoggingOptions = Electron.StartLoggingOptions;
+    type SystemMemoryInfo = Electron.SystemMemoryInfo;
+    type ToBitmapOptions = Electron.ToBitmapOptions;
+    type ToDataURLOptions = Electron.ToDataURLOptions;
+    type ToPNGOptions = Electron.ToPNGOptions;
+    type TouchBarButtonConstructorOptions = Electron.TouchBarButtonConstructorOptions;
+    type TouchBarColorPickerConstructorOptions = Electron.TouchBarColorPickerConstructorOptions;
+    type TouchBarConstructorOptions = Electron.TouchBarConstructorOptions;
+    type TouchBarGroupConstructorOptions = Electron.TouchBarGroupConstructorOptions;
+    type TouchBarLabelConstructorOptions = Electron.TouchBarLabelConstructorOptions;
+    type TouchBarPopoverConstructorOptions = Electron.TouchBarPopoverConstructorOptions;
+    type TouchBarScrubberConstructorOptions = Electron.TouchBarScrubberConstructorOptions;
+    type TouchBarSegmentedControlConstructorOptions = Electron.TouchBarSegmentedControlConstructorOptions;
+    type TouchBarSliderConstructorOptions = Electron.TouchBarSliderConstructorOptions;
+    type TouchBarSpacerConstructorOptions = Electron.TouchBarSpacerConstructorOptions;
+    type TraceBufferUsageReturnValue = Electron.TraceBufferUsageReturnValue;
+    type UpdateTargetUrlEvent = Electron.UpdateTargetUrlEvent;
+    type UploadProgress = Electron.UploadProgress;
+    type VisibleOnAllWorkspacesOptions = Electron.VisibleOnAllWorkspacesOptions;
+    type WebContentsPrintOptions = Electron.WebContentsPrintOptions;
+    type WebviewTagPrintOptions = Electron.WebviewTagPrintOptions;
+    type WillNavigateEvent = Electron.WillNavigateEvent;
+    type EditFlags = Electron.EditFlags;
+    type FoundInPageResult = Electron.FoundInPageResult;
+    type Margins = Electron.Margins;
+    type MediaFlags = Electron.MediaFlags;
+    type WebPreferences = Electron.WebPreferences;
+    type DefaultFontFamily = Electron.DefaultFontFamily;
+    type BluetoothDevice = Electron.BluetoothDevice;
+    type Certificate = Electron.Certificate;
+    type CertificatePrincipal = Electron.CertificatePrincipal;
+    type Cookie = Electron.Cookie;
+    type CPUUsage = Electron.CPUUsage;
+    type CrashReport = Electron.CrashReport;
+    type CustomScheme = Electron.CustomScheme;
+    type DesktopCapturerSource = Electron.DesktopCapturerSource;
+    type Display = Electron.Display;
+    type Event = Electron.Event;
+    type Extension = Electron.Extension;
+    type ExtensionInfo = Electron.ExtensionInfo;
+    type FileFilter = Electron.FileFilter;
+    type FilePathWithHeaders = Electron.FilePathWithHeaders;
+    type GPUFeatureStatus = Electron.GPUFeatureStatus;
+    type InputEvent = Electron.InputEvent;
+    type IOCounters = Electron.IOCounters;
+    type IpcMainEvent = Electron.IpcMainEvent;
+    type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
+    type IpcRendererEvent = Electron.IpcRendererEvent;
+    type JumpListCategory = Electron.JumpListCategory;
+    type JumpListItem = Electron.JumpListItem;
+    type KeyboardEvent = Electron.KeyboardEvent;
+    type KeyboardInputEvent = Electron.KeyboardInputEvent;
+    type MemoryInfo = Electron.MemoryInfo;
+    type MemoryUsageDetails = Electron.MemoryUsageDetails;
+    type MimeTypedBuffer = Electron.MimeTypedBuffer;
+    type MouseInputEvent = Electron.MouseInputEvent;
+    type MouseWheelInputEvent = Electron.MouseWheelInputEvent;
+    type NewWindowWebContentsEvent = Electron.NewWindowWebContentsEvent;
+    type NotificationAction = Electron.NotificationAction;
+    type Point = Electron.Point;
+    type PostBody = Electron.PostBody;
+    type PostData = Electron.PostData;
+    type PrinterInfo = Electron.PrinterInfo;
+    type ProcessMemoryInfo = Electron.ProcessMemoryInfo;
+    type ProcessMetric = Electron.ProcessMetric;
+    type Product = Electron.Product;
+    type ProtocolRequest = Electron.ProtocolRequest;
+    type ProtocolResponse = Electron.ProtocolResponse;
+    type ProtocolResponseUploadData = Electron.ProtocolResponseUploadData;
+    type Rectangle = Electron.Rectangle;
+    type Referrer = Electron.Referrer;
+    type ScrubberItem = Electron.ScrubberItem;
+    type SegmentedControlSegment = Electron.SegmentedControlSegment;
+    type ServiceWorkerInfo = Electron.ServiceWorkerInfo;
+    type SharedWorkerInfo = Electron.SharedWorkerInfo;
+    type ShortcutDetails = Electron.ShortcutDetails;
+    type Size = Electron.Size;
+    type StreamProtocolResponse = Electron.StreamProtocolResponse;
+    type StringProtocolResponse = Electron.StringProtocolResponse;
+    type Task = Electron.Task;
+    type ThumbarButton = Electron.ThumbarButton;
+    type TraceCategoriesAndOptions = Electron.TraceCategoriesAndOptions;
+    type TraceConfig = Electron.TraceConfig;
+    type Transaction = Electron.Transaction;
+    type UploadBlob = Electron.UploadBlob;
+    type UploadData = Electron.UploadData;
+    type UploadFile = Electron.UploadFile;
+    type UploadRawData = Electron.UploadRawData;
+    type WebSource = Electron.WebSource;
+  }
+
+  namespace Renderer {
+    class BrowserWindowProxy extends Electron.BrowserWindowProxy {}
+    const contextBridge: ContextBridge;
+    const ipcRenderer: IpcRenderer;
+    const remote: Remote;
+    const webFrame: WebFrame;
+    const webviewTag: WebviewTag;
+    type AboutPanelOptionsOptions = Electron.AboutPanelOptionsOptions;
+    type AddRepresentationOptions = Electron.AddRepresentationOptions;
+    type AnimationSettings = Electron.AnimationSettings;
+    type AppDetailsOptions = Electron.AppDetailsOptions;
+    type AuthenticationResponseDetails = Electron.AuthenticationResponseDetails;
+    type AuthInfo = Electron.AuthInfo;
+    type AutoResizeOptions = Electron.AutoResizeOptions;
+    type BeforeSendResponse = Electron.BeforeSendResponse;
+    type BitmapOptions = Electron.BitmapOptions;
+    type BlinkMemoryInfo = Electron.BlinkMemoryInfo;
+    type BrowserViewConstructorOptions = Electron.BrowserViewConstructorOptions;
+    type BrowserWindowConstructorOptions = Electron.BrowserWindowConstructorOptions;
+    type CertificateTrustDialogOptions = Electron.CertificateTrustDialogOptions;
+    type ClearStorageDataOptions = Electron.ClearStorageDataOptions;
+    type ClientRequestConstructorOptions = Electron.ClientRequestConstructorOptions;
+    type Config = Electron.Config;
+    type ConsoleMessageEvent = Electron.ConsoleMessageEvent;
+    type ContextMenuParams = Electron.ContextMenuParams;
+    type CookiesGetFilter = Electron.CookiesGetFilter;
+    type CookiesSetDetails = Electron.CookiesSetDetails;
+    type CrashReporterStartOptions = Electron.CrashReporterStartOptions;
+    type CreateFromBitmapOptions = Electron.CreateFromBitmapOptions;
+    type CreateFromBufferOptions = Electron.CreateFromBufferOptions;
+    type CreateInterruptedDownloadOptions = Electron.CreateInterruptedDownloadOptions;
+    type Data = Electron.Data;
+    type Details = Electron.Details;
+    type DidChangeThemeColorEvent = Electron.DidChangeThemeColorEvent;
+    type DidFailLoadEvent = Electron.DidFailLoadEvent;
+    type DidFrameFinishLoadEvent = Electron.DidFrameFinishLoadEvent;
+    type DidNavigateEvent = Electron.DidNavigateEvent;
+    type DidNavigateInPageEvent = Electron.DidNavigateInPageEvent;
+    type DisplayBalloonOptions = Electron.DisplayBalloonOptions;
+    type EnableNetworkEmulationOptions = Electron.EnableNetworkEmulationOptions;
+    type FeedURLOptions = Electron.FeedURLOptions;
+    type FileIconOptions = Electron.FileIconOptions;
+    type Filter = Electron.Filter;
+    type FindInPageOptions = Electron.FindInPageOptions;
+    type FocusOptions = Electron.FocusOptions;
+    type FoundInPageEvent = Electron.FoundInPageEvent;
+    type FromPartitionOptions = Electron.FromPartitionOptions;
+    type HeadersReceivedResponse = Electron.HeadersReceivedResponse;
+    type HeapStatistics = Electron.HeapStatistics;
+    type IgnoreMouseEventsOptions = Electron.IgnoreMouseEventsOptions;
+    type ImportCertificateOptions = Electron.ImportCertificateOptions;
+    type Info = Electron.Info;
+    type Input = Electron.Input;
+    type InsertCSSOptions = Electron.InsertCSSOptions;
+    type IpcMessageEvent = Electron.IpcMessageEvent;
+    type Item = Electron.Item;
+    type JumpListSettings = Electron.JumpListSettings;
+    type LoadCommitEvent = Electron.LoadCommitEvent;
+    type LoadFileOptions = Electron.LoadFileOptions;
+    type LoadURLOptions = Electron.LoadURLOptions;
+    type LoginItemSettings = Electron.LoginItemSettings;
+    type LoginItemSettingsOptions = Electron.LoginItemSettingsOptions;
+    type MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+    type MessageBoxOptions = Electron.MessageBoxOptions;
+    type MessageBoxReturnValue = Electron.MessageBoxReturnValue;
+    type MessageBoxSyncOptions = Electron.MessageBoxSyncOptions;
+    type MessageDetails = Electron.MessageDetails;
+    type MessageEvent = Electron.MessageEvent;
+    type MoveToApplicationsFolderOptions = Electron.MoveToApplicationsFolderOptions;
+    type NewWindowEvent = Electron.NewWindowEvent;
+    type NotificationConstructorOptions = Electron.NotificationConstructorOptions;
+    type OnBeforeRedirectListenerDetails = Electron.OnBeforeRedirectListenerDetails;
+    type OnBeforeRequestListenerDetails = Electron.OnBeforeRequestListenerDetails;
+    type OnBeforeSendHeadersListenerDetails = Electron.OnBeforeSendHeadersListenerDetails;
+    type OnCompletedListenerDetails = Electron.OnCompletedListenerDetails;
+    type OnErrorOccurredListenerDetails = Electron.OnErrorOccurredListenerDetails;
+    type OnHeadersReceivedListenerDetails = Electron.OnHeadersReceivedListenerDetails;
+    type OnResponseStartedListenerDetails = Electron.OnResponseStartedListenerDetails;
+    type OnSendHeadersListenerDetails = Electron.OnSendHeadersListenerDetails;
+    type OpenDevToolsOptions = Electron.OpenDevToolsOptions;
+    type OpenDialogOptions = Electron.OpenDialogOptions;
+    type OpenDialogReturnValue = Electron.OpenDialogReturnValue;
+    type OpenDialogSyncOptions = Electron.OpenDialogSyncOptions;
+    type OpenExternalOptions = Electron.OpenExternalOptions;
+    type Options = Electron.Options;
+    type PageFaviconUpdatedEvent = Electron.PageFaviconUpdatedEvent;
+    type PageTitleUpdatedEvent = Electron.PageTitleUpdatedEvent;
+    type Parameters = Electron.Parameters;
+    type Payment = Electron.Payment;
+    type PermissionCheckHandlerHandlerDetails = Electron.PermissionCheckHandlerHandlerDetails;
+    type PermissionRequestHandlerHandlerDetails = Electron.PermissionRequestHandlerHandlerDetails;
+    type PluginCrashedEvent = Electron.PluginCrashedEvent;
+    type PopupOptions = Electron.PopupOptions;
+    type PreconnectOptions = Electron.PreconnectOptions;
+    type PrintToPDFOptions = Electron.PrintToPDFOptions;
+    type Privileges = Electron.Privileges;
+    type ProgressBarOptions = Electron.ProgressBarOptions;
+    type Provider = Electron.Provider;
+    type ReadBookmark = Electron.ReadBookmark;
+    type RelaunchOptions = Electron.RelaunchOptions;
+    type Request = Electron.Request;
+    type ResizeOptions = Electron.ResizeOptions;
+    type ResourceUsage = Electron.ResourceUsage;
+    type Response = Electron.Response;
+    type Result = Electron.Result;
+    type SaveDialogOptions = Electron.SaveDialogOptions;
+    type SaveDialogReturnValue = Electron.SaveDialogReturnValue;
+    type SaveDialogSyncOptions = Electron.SaveDialogSyncOptions;
+    type Settings = Electron.Settings;
+    type SourcesOptions = Electron.SourcesOptions;
+    type StartLoggingOptions = Electron.StartLoggingOptions;
+    type SystemMemoryInfo = Electron.SystemMemoryInfo;
+    type ToBitmapOptions = Electron.ToBitmapOptions;
+    type ToDataURLOptions = Electron.ToDataURLOptions;
+    type ToPNGOptions = Electron.ToPNGOptions;
+    type TouchBarButtonConstructorOptions = Electron.TouchBarButtonConstructorOptions;
+    type TouchBarColorPickerConstructorOptions = Electron.TouchBarColorPickerConstructorOptions;
+    type TouchBarConstructorOptions = Electron.TouchBarConstructorOptions;
+    type TouchBarGroupConstructorOptions = Electron.TouchBarGroupConstructorOptions;
+    type TouchBarLabelConstructorOptions = Electron.TouchBarLabelConstructorOptions;
+    type TouchBarPopoverConstructorOptions = Electron.TouchBarPopoverConstructorOptions;
+    type TouchBarScrubberConstructorOptions = Electron.TouchBarScrubberConstructorOptions;
+    type TouchBarSegmentedControlConstructorOptions = Electron.TouchBarSegmentedControlConstructorOptions;
+    type TouchBarSliderConstructorOptions = Electron.TouchBarSliderConstructorOptions;
+    type TouchBarSpacerConstructorOptions = Electron.TouchBarSpacerConstructorOptions;
+    type TraceBufferUsageReturnValue = Electron.TraceBufferUsageReturnValue;
+    type UpdateTargetUrlEvent = Electron.UpdateTargetUrlEvent;
+    type UploadProgress = Electron.UploadProgress;
+    type VisibleOnAllWorkspacesOptions = Electron.VisibleOnAllWorkspacesOptions;
+    type WebContentsPrintOptions = Electron.WebContentsPrintOptions;
+    type WebviewTagPrintOptions = Electron.WebviewTagPrintOptions;
+    type WillNavigateEvent = Electron.WillNavigateEvent;
+    type EditFlags = Electron.EditFlags;
+    type FoundInPageResult = Electron.FoundInPageResult;
+    type Margins = Electron.Margins;
+    type MediaFlags = Electron.MediaFlags;
+    type WebPreferences = Electron.WebPreferences;
+    type DefaultFontFamily = Electron.DefaultFontFamily;
+    type BluetoothDevice = Electron.BluetoothDevice;
+    type Certificate = Electron.Certificate;
+    type CertificatePrincipal = Electron.CertificatePrincipal;
+    type Cookie = Electron.Cookie;
+    type CPUUsage = Electron.CPUUsage;
+    type CrashReport = Electron.CrashReport;
+    type CustomScheme = Electron.CustomScheme;
+    type DesktopCapturerSource = Electron.DesktopCapturerSource;
+    type Display = Electron.Display;
+    type Event = Electron.Event;
+    type Extension = Electron.Extension;
+    type ExtensionInfo = Electron.ExtensionInfo;
+    type FileFilter = Electron.FileFilter;
+    type FilePathWithHeaders = Electron.FilePathWithHeaders;
+    type GPUFeatureStatus = Electron.GPUFeatureStatus;
+    type InputEvent = Electron.InputEvent;
+    type IOCounters = Electron.IOCounters;
+    type IpcMainEvent = Electron.IpcMainEvent;
+    type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
+    type IpcRendererEvent = Electron.IpcRendererEvent;
+    type JumpListCategory = Electron.JumpListCategory;
+    type JumpListItem = Electron.JumpListItem;
+    type KeyboardEvent = Electron.KeyboardEvent;
+    type KeyboardInputEvent = Electron.KeyboardInputEvent;
+    type MemoryInfo = Electron.MemoryInfo;
+    type MemoryUsageDetails = Electron.MemoryUsageDetails;
+    type MimeTypedBuffer = Electron.MimeTypedBuffer;
+    type MouseInputEvent = Electron.MouseInputEvent;
+    type MouseWheelInputEvent = Electron.MouseWheelInputEvent;
+    type NewWindowWebContentsEvent = Electron.NewWindowWebContentsEvent;
+    type NotificationAction = Electron.NotificationAction;
+    type Point = Electron.Point;
+    type PostBody = Electron.PostBody;
+    type PostData = Electron.PostData;
+    type PrinterInfo = Electron.PrinterInfo;
+    type ProcessMemoryInfo = Electron.ProcessMemoryInfo;
+    type ProcessMetric = Electron.ProcessMetric;
+    type Product = Electron.Product;
+    type ProtocolRequest = Electron.ProtocolRequest;
+    type ProtocolResponse = Electron.ProtocolResponse;
+    type ProtocolResponseUploadData = Electron.ProtocolResponseUploadData;
+    type Rectangle = Electron.Rectangle;
+    type Referrer = Electron.Referrer;
+    type ScrubberItem = Electron.ScrubberItem;
+    type SegmentedControlSegment = Electron.SegmentedControlSegment;
+    type ServiceWorkerInfo = Electron.ServiceWorkerInfo;
+    type SharedWorkerInfo = Electron.SharedWorkerInfo;
+    type ShortcutDetails = Electron.ShortcutDetails;
+    type Size = Electron.Size;
+    type StreamProtocolResponse = Electron.StreamProtocolResponse;
+    type StringProtocolResponse = Electron.StringProtocolResponse;
+    type Task = Electron.Task;
+    type ThumbarButton = Electron.ThumbarButton;
+    type TraceCategoriesAndOptions = Electron.TraceCategoriesAndOptions;
+    type TraceConfig = Electron.TraceConfig;
+    type Transaction = Electron.Transaction;
+    type UploadBlob = Electron.UploadBlob;
+    type UploadData = Electron.UploadData;
+    type UploadFile = Electron.UploadFile;
+    type UploadRawData = Electron.UploadRawData;
+    type WebSource = Electron.WebSource;
+  }
+
+  const app: App;
+  const autoUpdater: AutoUpdater;
+  const clipboard: Clipboard;
+  const contentTracing: ContentTracing;
+  const contextBridge: ContextBridge;
+  const crashReporter: CrashReporter;
+  const desktopCapturer: DesktopCapturer;
+  const dialog: Dialog;
+  const globalShortcut: GlobalShortcut;
+  const inAppPurchase: InAppPurchase;
+  const ipcMain: IpcMain;
+  const ipcRenderer: IpcRenderer;
+  type nativeImage = NativeImage;
+  const nativeImage: typeof NativeImage;
+  const nativeTheme: NativeTheme;
+  const net: Net;
+  const netLog: NetLog;
+  const powerMonitor: PowerMonitor;
+  const powerSaveBlocker: PowerSaveBlocker;
+  const protocol: Protocol;
+  const remote: Remote;
+  const screen: Screen;
+  type session = Session;
+  const session: typeof Session;
+  const shell: Shell;
+  const systemPreferences: SystemPreferences;
+  type webContents = WebContents;
+  const webContents: typeof WebContents;
+  const webFrame: WebFrame;
+  const webviewTag: WebviewTag;
+
 }
 
 declare module 'electron' {
   export = Electron;
+}
+
+declare module 'electron/main' {
+  export = Electron.Main
+}
+
+declare module 'electron/common' {
+  export = Electron.Common
+}
+
+declare module 'electron/renderer' {
+  export = Electron.Renderer
 }
 
 interface NodeRequireFunction {
@@ -14021,11 +14982,14 @@ Takes a V8 heap snapshot and saves it to `filePath`.
      */
     traceProcessWarnings: boolean;
     /**
-     * A `String` representing the current process's type, can be `"browser"` (i.e.
-     * main process), `"renderer"`, or `"worker"` (i.e. web worker).
+     * A `String` representing the current process's type, can be:
+     * 
+     * * `browser` - The main process
+     * * `renderer` - A renderer process
+* `worker` - In a web worker
      *
      */
-    readonly type: string;
+    readonly type: ('browser' | 'renderer' | 'worker');
     /**
      * A `Boolean`. If the app is running as a Windows Store app (appx), this property
      * is `true`, for otherwise it is `undefined`.
